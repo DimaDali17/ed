@@ -2,439 +2,479 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ED — Оракул трейдинга</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070605">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ED — Maison de Fortune</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Rubik+Mono+One&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,500;1,400;1,500&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0b0614; --bg2:#1a0b2e; --gold:#ffcf3f; --gold2:#ff9d00; --pink:#ff2e88; --cyan:#21f0ff;
-  --buy:#2bff88; --sell:#ff3b4f; --hold:#4aa8ff; --text:#f6ecff; --muted:#a993c9;
+  --bg:#070605; --ink:#f3ead8; --muted:#8f8571;
+  --g1:#fbefc4; --g2:#e3c27a; --g3:#b98b3e; --g4:#6e4f1d;
+  --gold:linear-gradient(135deg,var(--g1) 0%,var(--g2) 30%,var(--g3) 60%,var(--g1) 80%,var(--g3) 100%);
+  --buy:#3fb28a; --sell:#c2384a; --hold:#4f7fd1;
+  --h:84px;
+  --serif:'Playfair Display',Georgia,serif; --cg:'Cormorant Garamond',Georgia,serif; --sans:Manrope,system-ui,sans-serif;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
 body{
-  background:radial-gradient(ellipse at 50% -10%, #3b1466 0%, var(--bg2) 35%, var(--bg) 75%);
-  color:var(--text); font-family:Inter,system-ui,sans-serif; overflow-x:hidden; min-height:100vh;
-  display:flex; flex-direction:column; align-items:center;
+  min-height:100dvh;background-attachment:fixed;color:var(--ink);font-family:var(--sans);overflow-x:hidden;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 0%,#2a1f10 0%,transparent 70%),
+    radial-gradient(ellipse 40% 60% at 15% 60%,#1a130a 0%,transparent 70%),
+    var(--bg);
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  touch-action:manipulation;
 }
-body.shake{animation:shake .5s linear 3}
-@keyframes shake{0%,100%{transform:translate(0)}20%{transform:translate(-8px,4px)}40%{transform:translate(7px,-5px)}60%{transform:translate(-6px,-3px)}80%{transform:translate(5px,6px)}}
-.stars{position:fixed;inset:0;pointer-events:none;z-index:0;
-  background-image:radial-gradient(2px 2px at 20% 30%,#fff8,transparent),radial-gradient(1px 1px at 70% 20%,#fff6,transparent),
-  radial-gradient(1.5px 1.5px at 40% 80%,#fff5,transparent),radial-gradient(1px 1px at 85% 65%,#fff7,transparent),
-  radial-gradient(2px 2px at 10% 75%,#fff4,transparent),radial-gradient(1px 1px at 55% 45%,#fff6,transparent);
-  animation:twinkle 4s ease-in-out infinite alternate}
-@keyframes twinkle{to{opacity:.4}}
-main{position:relative;z-index:1;width:100%;max-width:980px;padding:24px 16px 48px;display:flex;flex-direction:column;align-items:center;gap:22px}
+body.shake main{animation:shake .45s ease-in-out 2}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.grain{position:fixed;inset:0;pointer-events:none;z-index:2;opacity:.06;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
+.gold-text{background:var(--gold);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* top bar */
+.topbar{position:relative;z-index:5;display:flex;justify-content:space-between;align-items:center;padding:18px 28px;
+  font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--muted)}
+.topbar b{color:var(--g2);font-weight:600}
+.sound{background:none;border:1px solid #ffffff22;color:var(--g2);border-radius:999px;padding:7px 14px;font:600 10px var(--sans);
+  letter-spacing:.25em;text-transform:uppercase;cursor:pointer}
+
+/* layout */
+.stage{position:relative;z-index:3;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;
+  max-width:1280px;margin:0 auto;padding:0 24px 40px;min-height:calc(100dvh - 60px)}
+.muse{position:relative;align-self:stretch;min-height:560px}
+.muse img{position:absolute;right:-40px;bottom:0;height:100%;max-height:820px;width:auto;max-width:none;object-fit:cover;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 25%,#000 70%,transparent 100%),linear-gradient(0deg,transparent 0%,#000 18%);
+  -webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent 0%,#000 25%,#000 70%,transparent 100%),linear-gradient(0deg,transparent 0%,#000 18%);
+  mask-composite:intersect;filter:contrast(1.05) saturate(.85) sepia(.15);opacity:.95}
+.muse .caption{position:absolute;left:8%;bottom:12%;font-family:var(--cg);font-style:italic;font-size:22px;color:var(--g2);line-height:1.3;max-width:220px}
+.muse .caption small{display:block;font:600 10px var(--sans);letter-spacing:.3em;text-transform:uppercase;color:var(--muted);font-style:normal;margin-top:10px}
+
+.center{display:flex;flex-direction:column;align-items:center;gap:22px;padding:10px 0;width:min(560px,100%)}
 header{text-align:center}
-.crystal{font-size:46px;filter:drop-shadow(0 0 18px #b46bff);animation:float 3s ease-in-out infinite}
-@keyframes float{50%{transform:translateY(-8px)}}
-h1{font-family:'Rubik Mono One',sans-serif;font-size:clamp(56px,13vw,120px);line-height:.9;letter-spacing:.06em;
-  background:linear-gradient(180deg,#fff6c9 0%,var(--gold) 40%,var(--gold2) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 0 22px #ffb30066) drop-shadow(0 4px 0 #7a3b00)}
-.sub{font-family:'Russo One',sans-serif;color:var(--cyan);text-shadow:0 0 12px #21f0ff99;font-size:clamp(14px,3.4vw,20px);margin-top:8px;letter-spacing:.04em}
-.tag{color:var(--muted);font-size:14px;margin-top:6px}
+.eyebrow{font-size:10px;letter-spacing:.5em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--serif);font-weight:900;font-size:clamp(84px,11vw,148px);line-height:.9;letter-spacing:.04em;margin:8px 0 4px;
+  filter:drop-shadow(0 8px 30px #e3c27a33)}
+.tagline{font-family:var(--cg);font-style:italic;font-size:clamp(18px,2.2vw,24px);color:#d8ccb2}
+.rule{display:flex;align-items:center;gap:12px;justify-content:center;color:var(--g3);margin-top:10px}
+.rule::before,.rule::after{content:"";width:56px;height:1px;background:linear-gradient(90deg,transparent,var(--g3))}
+.rule::after{transform:scaleX(-1)}
 
-.markets{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
-.mkt{font-family:'Russo One',sans-serif;font-size:16px;color:var(--text);background:#ffffff0d;border:2px solid #ffffff26;border-radius:999px;
-  padding:10px 18px;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:8px}
-.mkt:hover{border-color:var(--pink);transform:translateY(-2px)}
-.mkt.active{background:linear-gradient(135deg,var(--pink),#9b2bff);border-color:#fff;box-shadow:0 0 22px #ff2e8899}
-.mkt:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.markets{display:flex;gap:4px;padding:4px;border:1px solid #ffffff1a;border-radius:999px;background:#ffffff06;backdrop-filter:blur(6px)}
+.mkt{font:600 11px var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--muted);background:none;border:0;border-radius:999px;
+  padding:11px 16px;cursor:pointer;transition:color .25s,background .25s;white-space:nowrap}
+.mkt:hover{color:var(--ink)}
+.mkt.active{background:var(--gold);color:#1b1206;box-shadow:0 4px 20px #e3c27a40}
+.mkt:disabled{cursor:not-allowed}
 
-.machine-wrap{display:flex;align-items:center;gap:6px}
-.machine{position:relative;border-radius:28px;padding:18px 18px 22px;
-  background:linear-gradient(180deg,#ffcf3f,#d98a00 60%,#8a4d00);box-shadow:0 0 0 4px #5a2c00,0 0 60px #ffb30055,inset 0 4px 0 #fff6b0}
-.marquee{display:flex;justify-content:center;gap:10px;margin-bottom:12px}
-.bulb{width:12px;height:12px;border-radius:50%;background:#fff3b0;box-shadow:0 0 10px #fff3b0}
-.bulb:nth-child(odd){animation:blink .8s infinite}
-.bulb:nth-child(even){animation:blink .8s .4s infinite}
-.spinning .bulb{animation-duration:.15s}
-@keyframes blink{50%{background:#ff2e88;box-shadow:0 0 10px #ff2e88}}
-.mname{font-family:'Russo One',sans-serif;text-align:center;color:#4a1f00;font-size:15px;margin:-4px 0 10px;letter-spacing:.08em;text-transform:uppercase}
-.window{position:relative;display:grid;grid-template-columns:1fr 1.7fr 1fr;gap:8px;background:#1b0d02;padding:10px;border-radius:16px;box-shadow:inset 0 6px 18px #000}
-.reel{position:relative;height:var(--h3);overflow:hidden;border-radius:10px;
-  background:linear-gradient(180deg,#d9d2e6 0%,#fff 30%,#fff 70%,#d9d2e6 100%)}
+/* machine */
+.rig{display:flex;align-items:center;gap:0}
+.machine{position:relative;padding:22px 22px 18px;border-radius:22px;width:min(480px,calc(100vw - 100px));
+  background:linear-gradient(160deg,#1c1813,#0c0a08 55%,#15110c);
+  box-shadow:0 0 0 1px #e3c27a55,0 0 0 6px #0c0a08,0 0 0 7px #e3c27a33,0 40px 80px -20px #000,0 0 120px -30px #e3c27a40}
+.corner{position:absolute;width:26px;height:26px;border:1px solid var(--g2);opacity:.8}
+.corner.tl{top:8px;left:8px;border-right:0;border-bottom:0}
+.corner.tr{top:8px;right:8px;border-left:0;border-bottom:0}
+.corner.bl{bottom:8px;left:8px;border-right:0;border-top:0}
+.corner.br{bottom:8px;right:8px;border-left:0;border-top:0}
+.mhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;padding:0 6px}
+.mname{font-family:var(--cg);font-style:italic;font-size:20px;color:var(--g2)}
+.mno{font-size:10px;letter-spacing:.3em;color:var(--muted)}
+.lights{display:flex;gap:7px}
+.lights i{width:5px;height:5px;border-radius:50%;background:var(--g3);opacity:.4}
+.spinning .lights i{animation:glow .5s infinite}
+.spinning .lights i:nth-child(2){animation-delay:.1s}.spinning .lights i:nth-child(3){animation-delay:.2s}
+@keyframes glow{50%{opacity:1;background:var(--g1);box-shadow:0 0 8px var(--g1)}}
+
+.window{position:relative;display:grid;grid-template-columns:1fr 2.1fr 1fr;gap:6px;padding:8px;border-radius:12px;
+  background:#050404;box-shadow:inset 0 0 0 1px #e3c27a40,inset 0 10px 30px #000}
+.reel{position:relative;height:calc(var(--h)*3);overflow:hidden;border-radius:6px;container-type:inline-size;
+  background:linear-gradient(180deg,#d9cfbb 0%,#f6f0e3 22%,#fbf7ee 50%,#f6f0e3 78%,#d9cfbb 100%)}
 .reel::after{content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(180deg,#0009 0%,transparent 28%,transparent 72%,#0009 100%)}
+  background:linear-gradient(180deg,#000a 0%,transparent 30%,transparent 70%,#000a 100%)}
 .strip{position:absolute;left:0;right:0;top:0;will-change:transform}
-.cell{height:var(--h);display:flex;align-items:center;justify-content:center;font-size:calc(var(--h)*.55);user-select:none}
-.cell.word{font-family:'Russo One',sans-serif;font-size:calc(var(--h)*.33);letter-spacing:.02em}
-.w-buy{color:#0a9c4c}.w-sell{color:#d31a2e}.w-hold{color:#1667c9}
-.blur .strip{filter:blur(1.5px)}
-.payline{position:absolute;left:4px;right:4px;top:50%;height:var(--h);transform:translateY(-50%);border:3px solid var(--pink);border-radius:12px;
-  pointer-events:none;box-shadow:0 0 18px var(--pink),inset 0 0 14px #ff2e8855}
-.payline::before,.payline::after{content:"▶";position:absolute;top:50%;transform:translateY(-50%);color:var(--pink);font-size:18px;text-shadow:0 0 8px var(--pink)}
-.payline::before{left:-20px}.payline::after{right:-20px;transform:translateY(-50%) scaleX(-1)}
-:root{--h:86px;--h3:258px}
-@media (max-width:560px){:root{--h:64px;--h3:192px}.machine{padding:12px 10px 16px}}
+.cell{height:var(--h);display:flex;align-items:center;justify-content:center;user-select:none;
+  font-family:var(--serif);font-weight:500;font-size:calc(var(--h)*.48);color:#2a2116}
+.cell.word{font-weight:700;font-size:min(calc(var(--h)*.3),17cqw);letter-spacing:.06em;white-space:nowrap}
+.w-buy{color:#1d7a58}.w-sell{color:#9e1f31}.w-hold{color:#2a539f}
+.blur .strip{filter:blur(1.2px)}
+.payline{position:absolute;left:2px;right:2px;top:50%;height:calc(var(--h) + 4px);transform:translateY(-50%);pointer-events:none;
+  border-top:1px solid var(--g2);border-bottom:1px solid var(--g2);box-shadow:0 0 18px #e3c27a40}
+.payline::before,.payline::after{content:"";position:absolute;top:50%;width:0;height:0;border:7px solid transparent;transform:translateY(-50%)}
+.payline::before{left:-6px;border-left-color:var(--g2)}
+.payline::after{right:-6px;border-right-color:var(--g2)}
 
-.timer{font-family:'Russo One',sans-serif;text-align:center;color:#4a1f00;margin-top:10px;font-size:14px;min-height:18px}
-.bar{height:8px;background:#5a2c00;border-radius:4px;overflow:hidden;margin-top:6px}
-.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--cyan))}
+.status{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding:0 6px;
+  font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.status b{color:var(--g2);font-weight:600}
+.bar{height:1px;background:#ffffff14;margin:10px 6px 0;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--gold)}
 
 /* lever */
-.lever{position:relative;width:70px;height:300px;touch-action:none;cursor:grab;user-select:none}
-.lever.disabled{cursor:not-allowed;opacity:.7}
-.lever .mount{position:absolute;left:0;top:50%;width:34px;height:70px;transform:translateY(-50%);border-radius:0 14px 14px 0;
-  background:linear-gradient(90deg,#8a4d00,#ffcf3f 50%,#8a4d00);box-shadow:0 0 0 3px #5a2c00}
-.lever .slot{position:absolute;left:38px;top:20px;bottom:20px;width:10px;border-radius:6px;background:#1b0d02;box-shadow:inset 0 2px 6px #000}
-.lever .rod{position:absolute;left:39px;width:8px;background:linear-gradient(90deg,#999,#fff,#888);border-radius:4px}
-.lever .knob{position:absolute;left:19px;width:48px;height:48px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#fff 0 8%,#ff6b7f 18%,#e0102c 55%,#6b0010 100%);box-shadow:0 6px 16px #000a,0 0 24px #ff3b4f88}
-.hint{font-family:'Russo One',sans-serif;color:var(--gold);text-align:center;font-size:14px;text-shadow:0 0 8px #ffb300aa;animation:pulse 1.4s infinite}
-@keyframes pulse{50%{opacity:.4}}
+.lever{position:relative;width:64px;height:300px;touch-action:none;cursor:grab;user-select:none;flex:none}
+.lever.off{cursor:not-allowed}
+.lever .hub{position:absolute;left:0;top:50%;width:26px;height:64px;transform:translateY(-50%);border-radius:0 10px 10px 0;
+  background:linear-gradient(90deg,#3a2a12,var(--g2) 45%,var(--g4));box-shadow:0 0 0 1px #00000080}
+.lever .track{position:absolute;left:30px;top:22px;bottom:22px;width:6px;border-radius:4px;background:#000;box-shadow:inset 0 0 0 1px #e3c27a30}
+.lever .rod{position:absolute;left:30px;width:6px;border-radius:3px;background:linear-gradient(90deg,var(--g4),var(--g1),var(--g3))}
+.lever .knob{position:absolute;left:11px;width:44px;height:44px;border-radius:50%;
+  background:radial-gradient(circle at 34% 28%,#fff 0 6%,#3a3a3a 16%,#0d0d0d 60%,#000 100%);
+  box-shadow:0 0 0 1px var(--g2),0 0 0 4px #0c0a08,0 0 0 5px #e3c27a66,0 10px 24px #000}
+.hint{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);white-space:nowrap;font-size:9px;letter-spacing:.35em;
+  text-transform:uppercase;color:var(--g2);animation:pulse 2s infinite}
+@keyframes pulse{50%{opacity:.35}}
 
-.log{width:100%;max-width:560px;background:#ffffff08;border:1px solid #ffffff1a;border-radius:16px;padding:14px 16px}
-.log h3{font-family:'Russo One',sans-serif;font-size:14px;color:var(--muted);letter-spacing:.08em;margin-bottom:8px}
-.log ul{list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px}
-.log li{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed #ffffff14;padding-bottom:6px}
-.log li:last-child{border:0}
-.log .empty{color:var(--muted)}
-.stats{display:flex;gap:14px;font-size:13px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
-footer{color:#7d6a99;font-size:12px;text-align:center;max-width:520px}
+/* ledger */
+.ledger{width:min(520px,100%);padding:0 6px}
+.ledger h3{font:600 10px var(--sans);letter-spacing:.4em;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:10px}
+.ledger ul{list-style:none}
+.ledger li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #ffffff10;font-size:13px;color:#cfc4ad}
+.ledger li b{font-family:var(--serif);font-weight:500;letter-spacing:.08em}
+.ledger .empty{justify-content:center;font-family:var(--cg);font-style:italic;font-size:17px;color:var(--muted)}
+.b-buy{color:var(--buy)}.b-sell{color:#e05467}.b-hold{color:#7aa2e8}
+.stats{text-align:center;margin-top:10px;font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted)}
+footer{position:relative;z-index:3;text-align:center;padding:10px 24px 34px;font-family:var(--cg);font-style:italic;font-size:15px;color:#6f6656}
 
-/* verdict overlay */
-.overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;padding:16px;
-  background:#000c;opacity:0;pointer-events:none;transition:opacity .3s;text-align:center}
+/* verdict */
+.overlay{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  padding:calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));text-align:center;
+  background:radial-gradient(ellipse at center,#14100bf2 0%,#050404fa 70%);opacity:0;pointer-events:none;transition:opacity .4s}
 .overlay.show{opacity:1;pointer-events:auto}
-.verdict{font-family:'Rubik Mono One',sans-serif;font-size:clamp(34px,9vw,92px);line-height:1.05;transform:scale(.2) rotate(-12deg);opacity:0}
-.overlay.show .verdict{animation:slam .7s cubic-bezier(.2,1.6,.4,1) forwards}
-@keyframes slam{to{transform:scale(1) rotate(-3deg);opacity:1}}
-.overlay.buy .verdict{color:var(--buy);text-shadow:0 0 30px var(--buy),0 6px 0 #064}
-.overlay.sell .verdict{color:var(--sell);text-shadow:0 0 30px var(--sell),0 6px 0 #600}
-.overlay.hold .verdict{color:var(--hold);text-shadow:0 0 30px var(--hold),0 6px 0 #034}
-.overlay.sell{animation:redflash .25s steps(2) 6}
-@keyframes redflash{50%{background:#5a000dcc}}
-.overlay.buy{background:radial-gradient(circle,#0a3a20cc,#000d)}
-.overlay.hold{background:radial-gradient(circle,#0a2240cc,#000d)}
-.prophecy{font-size:clamp(15px,3.5vw,20px);color:#fff;max-width:620px;opacity:0;transition:opacity .4s .5s}
-.overlay.show .prophecy{opacity:.92}
-.again{font-family:'Russo One',sans-serif;font-size:18px;padding:12px 26px;border-radius:999px;border:0;cursor:pointer;
-  background:linear-gradient(135deg,var(--gold),var(--gold2));color:#3a1800;box-shadow:0 0 22px #ffb30088;opacity:0;transition:opacity .4s .9s}
-.overlay.show .again{opacity:1}
+.overlay .eyebrow{opacity:0;transform:translateY(10px);transition:.6s .1s}
+.v-name{font-family:var(--cg);font-style:italic;font-size:clamp(30px,6vw,52px);color:var(--g2);opacity:0;transform:translateY(12px);transition:.6s .25s}
+.v-word{font-family:var(--serif);font-weight:900;font-size:clamp(46px,12vw,140px);line-height:.95;letter-spacing:.02em;
+  opacity:0;transform:scale(1.25);filter:blur(10px);transition:opacity .7s .45s,transform .9s .45s cubic-bezier(.2,.8,.2,1),filter .7s .45s}
+.v-word .gold-text{display:inline-block}
+.v-line{width:0;height:1px;transition:width 1s .9s}
+.buy .v-line{background:var(--buy)}.sell .v-line{background:var(--sell)}.hold .v-line{background:var(--hold)}
+.v-tag{font-size:10px;letter-spacing:.5em;text-transform:uppercase;opacity:0;transition:opacity .6s 1.1s}
+.buy .v-tag{color:var(--buy)}.sell .v-tag{color:#e05467}.hold .v-tag{color:#7aa2e8}
+.prophecy{font-family:var(--cg);font-style:italic;font-size:clamp(18px,3.6vw,24px);color:#d8ccb2;max-width:560px;opacity:0;transition:opacity .7s 1.3s}
+.again{margin-top:10px;font:700 11px var(--sans);letter-spacing:.3em;text-transform:uppercase;color:#1b1206;background:var(--gold);border:0;
+  border-radius:999px;padding:16px 30px;cursor:pointer;box-shadow:0 8px 30px #e3c27a40;opacity:0;transition:opacity .6s 1.6s}
+.overlay.show .eyebrow,.overlay.show .v-name{opacity:1;transform:none}
+.overlay.show .v-word{opacity:1;transform:none;filter:none}
+.overlay.show .v-line{width:min(280px,60vw)}
+.overlay.show .v-tag,.overlay.show .prophecy,.overlay.show .again{opacity:1}
+.sell.show{animation:flash .3s steps(2) 4}
+@keyframes flash{50%{background:#2a070cf5}}
 canvas#fx{position:fixed;inset:0;z-index:30;pointer-events:none}
-.sound{position:fixed;top:12px;right:12px;z-index:40;background:#ffffff14;border:1px solid #ffffff2a;color:var(--text);border-radius:999px;padding:8px 12px;cursor:pointer;font-size:16px}
+
+/* ---------- tablet & phone ---------- */
+@media (max-width:1000px){
+  .stage{grid-template-columns:1fr;padding:0 16px 28px;min-height:auto}
+  .muse{position:absolute;inset:0 0 auto 0;height:520px;min-height:0;z-index:-1;pointer-events:none}
+  .muse img{right:50%;transform:translateX(50%);height:100%;opacity:.45;
+    -webkit-mask-image:linear-gradient(180deg,#000 30%,transparent 100%);mask-image:linear-gradient(180deg,#000 30%,transparent 100%)}
+  .muse .caption,.side{display:none}
+  .center{padding-top:110px}
+}
+@media (max-width:560px){
+  :root{--h:62px}
+  .machine{width:auto}
+  body{background-attachment:scroll}
+  .topbar{padding:12px 16px;font-size:9px;letter-spacing:.25em}
+  .topbar .hide-m{display:none}
+  .center{gap:18px;padding-top:90px}
+  h1{font-size:96px}
+  .tagline{font-size:18px;padding:0 10px}
+  .markets{width:100%;justify-content:space-between}
+  .mkt{padding:10px 8px;font-size:9.5px;letter-spacing:.12em;flex:1}
+  .rig{width:100%}
+  .machine{flex:1;min-width:0;padding:16px 12px 12px;border-radius:18px}
+  .corner{width:16px;height:16px}
+  .mname{font-size:17px}
+  .window{gap:4px;padding:6px}
+  .lever{width:48px;height:240px}
+  .lever .hub{width:18px;height:52px}
+  .lever .track,.lever .rod{left:21px}
+  .lever .knob{left:6px;width:38px;height:38px}
+  .hint{font-size:8px;letter-spacing:.2em;bottom:-10px}
+  .status{font-size:9px;letter-spacing:.2em}
+}
 </style>
 </head>
 <body>
-<div class="stars"></div>
-<button class="sound" id="sound" title="Звук">🔊</button>
-<main>
-  <header>
-    <div class="crystal">🔮</div>
-    <h1>ED</h1>
-    <div class="sub">ОРАКУЛ ТРЕЙДИНГА ЭДУАРДА</div>
-    <div class="tag">Вселенная знает. Графики — нет. Дёргай рычаг, Эд.</div>
-  </header>
+<div class="grain"></div>
+<div class="topbar">
+  <span>Maison <b>ED</b> <span class="hide-m">· Est. 2026</span></span>
+  <button class="sound" id="sound">Son · On</button>
+</div>
 
-  <div class="markets" id="markets">
-    <button class="mkt active" data-m="fx">💱 Валюта</button>
-    <button class="mkt" data-m="btc">₿ Биткоин</button>
-    <button class="mkt" data-m="stocks">📈 Акции</button>
-    <button class="mkt" data-m="options">🎯 Опционы</button>
+<div class="stage">
+  <div class="muse side-l" aria-hidden="true">
+    <img id="muse" src="https://images.unsplash.com/photo-1675972463384-9166f49fd748?auto=format&fit=crop&w=900&q=80" alt=""
+         onerror="this.style.visibility='hidden'">
+    <div class="caption">«Удача любит тех,<br>кто дёргает рычаг»<small>Мадам Фортуна</small></div>
   </div>
 
-  <div class="machine-wrap">
-    <div class="machine" id="machine">
-      <div class="marquee" id="marquee"></div>
-      <div class="mname" id="mname">Валютный автомат</div>
-      <div class="window">
-        <div class="reel" id="r0"><div class="strip"></div></div>
-        <div class="reel" id="r1"><div class="strip"></div></div>
-        <div class="reel" id="r2"><div class="strip"></div></div>
-        <div class="payline"></div>
+  <div class="center">
+    <header>
+      <div class="eyebrow">Частный оракул · Только для Эда</div>
+      <h1 class="gold-text">ED</h1>
+      <div class="tagline">Рынок непредсказуем. Мы — тоже.</div>
+      <div class="rule">✦</div>
+    </header>
+
+    <nav class="markets" id="markets">
+      <button class="mkt active" data-m="fx">Валюта</button>
+      <button class="mkt" data-m="btc">Биткоин</button>
+      <button class="mkt" data-m="stocks">Акции</button>
+      <button class="mkt" data-m="options">Опционы</button>
+    </nav>
+
+    <div class="rig">
+      <div class="machine" id="machine">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <div class="mhead">
+          <span class="mname" id="mname">Cabinet des Devises</span>
+          <span class="lights"><i></i><i></i><i></i></span>
+        </div>
+        <div class="window">
+          <div class="reel" id="r0"><div class="strip"></div></div>
+          <div class="reel" id="r1"><div class="strip"></div></div>
+          <div class="reel" id="r2"><div class="strip"></div></div>
+          <div class="payline"></div>
+        </div>
+        <div class="status"><span id="status">Готов к игре</span><b id="count">№ 001</b></div>
+        <div class="bar"><i id="bar"></i></div>
       </div>
-      <div class="timer" id="timer">Тяни рычаг →</div>
-      <div class="bar"><i id="bar"></i></div>
-    </div>
-    <div>
-      <div class="lever" id="lever">
-        <div class="mount"></div><div class="slot"></div>
+      <div class="lever" id="lever" aria-label="Рычаг">
+        <div class="hub"></div><div class="track"></div>
         <div class="rod" id="rod"></div><div class="knob" id="knob"></div>
+        <div class="hint" id="hint">Тяни</div>
       </div>
-      <div class="hint" id="hint">ТЯНИ ⬇</div>
     </div>
+
+    <section class="ledger">
+      <h3>Журнал сделок Эда</h3>
+      <ul id="log"></ul>
+      <div class="stats" id="stats"></div>
+    </section>
   </div>
 
-  <section class="log">
-    <h3>ЖУРНАЛ СДЕЛОК ЭДА</h3>
-    <ul id="log"><li class="empty">Пока пусто. Судьба ждёт.</li></ul>
-    <div class="stats" id="stats"></div>
-  </section>
+  <div class="side" aria-hidden="true"></div>
+</div>
 
-  <footer>Абсолютный рандом, честный как crypto.getRandomValues(). Не является инвестиционной рекомендацией — является рекомендацией вселенной. Пробел тоже дёргает рычаг.</footer>
-</main>
+<footer>Не является инвестиционной рекомендацией. Является рекомендацией вселенной.</footer>
 
 <div class="overlay" id="overlay">
-  <div class="verdict" id="verdict"></div>
+  <div class="eyebrow">Вердикт вселенной</div>
+  <div class="v-name">Эдуард,</div>
+  <div class="v-word"><span class="gold-text" id="vword"></span></div>
+  <div class="v-line"></div>
+  <div class="v-tag" id="vtag"></div>
   <div class="prophecy" id="prophecy"></div>
-  <button class="again" id="again">Ещё разок 🎰</button>
+  <button class="again" id="again">Испытать судьбу ещё раз</button>
 </div>
 <canvas id="fx"></canvas>
 
 <script>
 const MARKETS = {
-  fx:      {name:'Валютный автомат',  sym:['💵','💶','💴','💷','₽','🏦','💸','🪙'], fx:['💵','💶','💸']},
-  btc:     {name:'Крипто-автомат',    sym:['₿','🚀','🌕','🐳','💎','🧻','⛏️','🦍'], fx:['₿','🚀','🌕']},
-  stocks:  {name:'Биржевой автомат',  sym:['🐂','🐻','📈','📉','🏛️','🍏','🚗','💼'], fx:['📈','🐂','💰']},
-  options: {name:'Опционный автомат', sym:['Δ','Γ','Θ','ν','📞','🎯','⏳','🎲'], fx:['🎯','📞','🎲']},
+  fx:      {name:'Cabinet des Devises', sym:['$','€','£','¥','₽','₣','₩','₹']},
+  btc:     {name:'Salon Crypto',        sym:['₿','Ξ','◆','✦','∞','₿','◈','⟡']},
+  stocks:  {name:'Bourse Privée',       sym:['▲','▼','♛','%','◆','✦','$','€']},
+  options: {name:'Atelier des Options', sym:['Δ','Γ','Θ','ν','ρ','σ','Σ','∂']},
 };
-const DECISIONS = {
-  buy:  {word:'ПОКУПАТЬ', cls:'w-buy',  emoji:['🚀','💰','🤑','📈','🟢'],
-    verdicts:['ЭД, ПОКУПАЙ!','ЭД, ЗАХОДИ!','ЭД, БЕРИ НА ВСЕ!','ЭД, ЖМИ BUY!'],
-    prophecy:['Звёзды выстроились в зелёную свечу. Это знак.','Рынок шепчет твоё имя, Эдуард. Он хочет, чтобы ты зашёл.','Луна в фазе «to the moon». Не спорь с луной.','Хрустальный шар показал ракету. И, кажется, ламбу.']},
-  sell: {word:'ПРОДАВАТЬ', cls:'w-sell', emoji:['🔥','📉','🚨','🩸','🔴'],
-    verdicts:['ЭД, СРОЧНО ПРОДАВАЙ!','ЭД, СЛИВАЙ ВСЁ!','ЭД, БЕГИ!','ЭД, ЖМИ SELL!'],
-    prophecy:['Карты Таро выпали медведем. Три раза подряд.','Меркурий ретроградный, а график — тем более.','Духи предков настоятельно советуют выйти в кэш.','Шар треснул. Это плохой знак для лонгов.']},
-  hold: {word:'ДЕРЖАТЬ', cls:'w-hold', emoji:['💎','🙌','🧘','🗿','🔵'],
-    verdicts:['ЭД, ДЕРЖИ!','ЭД, НИ ШАГУ НАЗАД!','ЭД, АЛМАЗНЫЕ РУКИ!','ЭД, ТЕРПИ!'],
-    prophecy:['Вселенная говорит: ничего не трогай. Вообще ничего.','Истинный трейдер — это скала. Будь скалой, Эд.','Терпение — тоже позиция. Самая дзенская.','Гадалка зевнула и сказала: «Подожди». Это всё.']},
+const D = {
+  buy:  {word:'КУПИТЬ',  cls:'w-buy',  tag:'Длинная позиция',
+    verdicts:['покупай','заходи','бери','загружайся'],
+    prophecy:['Звёзды выстроились в зелёную свечу. Это знак.','Рынок шепчет твоё имя. Он ждёт тебя.','Луна в фазе «to the moon». С луной не спорят.','Хрустальный шар показал восходящий тренд. И, кажется, яхту.']},
+  sell: {word:'ПРОДАТЬ', cls:'w-sell', tag:'Срочный выход',
+    verdicts:['срочно продавай','продавай','беги','фиксируй']},
+  hold: {word:'ДЕРЖАТЬ', cls:'w-hold', tag:'Алмазные руки',
+    verdicts:['держи','терпи','ни шагу назад','не трогай']},
 };
-const KEYS = Object.keys(DECISIONS);
-const SPIN_MS = 10000;
-const STOPS = [5200, 7600, SPIN_MS]; // reels stop one by one, the center one last
+D.sell.prophecy = ['Карты Таро выпали медведем. Трижды подряд.','Меркурий ретроградный, а график — тем более.','Духи предков настоятельно советуют выйти в кэш.','Шар треснул. Это плохой знак для лонгов.'];
+D.hold.prophecy = ['Вселенная говорит: ничего не трогай. Вообще ничего.','Настоящий трейдер — это скала. Будь скалой, Эд.','Терпение — тоже позиция. Самая элегантная.','Мадам Фортуна зевнула и сказала: «Подожди».'];
+const KEYS = Object.keys(D);
+const SPIN_MS = 5000;
+const STOPS = [2700, 3800, SPIN_MS];
 
 const rnd = n => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; };
-const pick = arr => arr[rnd(arr.length)];
-
-let market = 'fx', spinning = false, soundOn = true, history = [];
-try { history = JSON.parse(localStorage.getItem('ed-history') || '[]'); soundOn = localStorage.getItem('ed-sound') !== '0'; } catch(e) {}
-
+const pick = a => a[rnd(a.length)];
 const $ = id => document.getElementById(id);
-const reels = [0,1,2].map(i => $('r'+i));
-const cellH = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--h'));
 
-// marquee bulbs
-for (let i=0;i<14;i++) $('marquee').appendChild(Object.assign(document.createElement('span'),{className:'bulb'}));
+let market='fx', spinning=false, soundOn=true, history=[];
+try{ history = JSON.parse(localStorage.getItem('ed-history')||'[]'); soundOn = localStorage.getItem('ed-sound')!=='0'; }catch(e){}
 
-function cellHTML(item){
-  if (typeof item === 'object') return `<div class="cell word ${item.cls}">${item.word}</div>`;
-  return `<div class="cell">${item}</div>`;
+const reels = [0,1,2].map(i=>$('r'+i));
+const H = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--h'));
+const cellHTML = it => typeof it==='object' ? `<div class="cell word ${it.cls}">${it.word}</div>` : `<div class="cell">${it}</div>`;
+const centerItem = () => Math.random()<.65 ? D[pick(KEYS)] : pick(MARKETS[market].sym);
+function build(i,len,final){
+  const a=[]; for(let k=0;k<len;k++) a.push(i===1?centerItem():pick(MARKETS[market].sym));
+  if(final) a[len-2]=final; return a;
 }
-function centerItem(){ const k = pick(KEYS); return Math.random()<.6 ? {key:k,...DECISIONS[k]} : pick(MARKETS[market].sym); }
-function build(reelIdx, length, finalItem){
-  const items = [];
-  for (let i=0;i<length;i++) items.push(reelIdx===1 ? centerItem() : pick(MARKETS[market].sym));
-  if (finalItem !== undefined) items[length-2] = finalItem; // land in middle of 3 visible rows
-  return items;
-}
-function renderIdle(){
-  reels.forEach((r,i) => {
-    const strip = r.querySelector('.strip');
-    let items = build(i,3);
-    if (i===1) items = [{...DECISIONS.buy},{...DECISIONS.hold},{...DECISIONS.sell}];
-    strip.innerHTML = items.map(cellHTML).join('');
-    strip.style.transform = 'translateY(0)';
+function idle(){
+  reels.forEach((r,i)=>{
+    const s=r.querySelector('.strip');
+    s.innerHTML=(i===1?[D.buy,D.hold,D.sell]:build(i,3)).map(cellHTML).join('');
+    s.style.transform='translateY(0)';
   });
 }
 
-// ---------- sound ----------
+/* sound */
 let ac;
-function tone(f, d=.06, type='square', vol=.05){
-  if (!soundOn) return;
-  ac = ac || new (window.AudioContext||window.webkitAudioContext)();
-  const o = ac.createOscillator(), g = ac.createGain();
-  o.type = type; o.frequency.value = f; g.gain.value = vol;
-  g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + d);
-  o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + d);
+function unlock(){ try{ ac = ac || new (window.AudioContext||window.webkitAudioContext)(); if(ac.state==='suspended') ac.resume(); }catch(e){} }
+function tone(f,d=.06,type='sine',vol=.05){
+  if(!soundOn||!ac) return;
+  const o=ac.createOscillator(), g=ac.createGain();
+  o.type=type; o.frequency.value=f; g.gain.setValueAtTime(vol,ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);
+  o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime+d);
 }
-function fanfare(kind){
-  const seq = kind==='buy' ? [523,659,784,1047] : kind==='sell' ? [440,370,311,220] : [392,392,523,523];
-  seq.forEach((f,i)=>setTimeout(()=>tone(f,.25,kind==='sell'?'sawtooth':'triangle',.08), i*140));
+function chord(k){
+  const s = k==='buy'?[523,659,784,1047]:k==='sell'?[392,330,277,196]:[440,554,659,880];
+  s.forEach((f,i)=>setTimeout(()=>tone(f,.9,'sine',.06),i*110));
 }
-$('sound').textContent = soundOn ? '🔊' : '🔇';
-$('sound').onclick = () => { soundOn = !soundOn; $('sound').textContent = soundOn?'🔊':'🔇'; try{localStorage.setItem('ed-sound', soundOn?'1':'0')}catch(e){} };
+const sBtn=$('sound');
+const paintSound=()=>sBtn.textContent='Son · '+(soundOn?'On':'Off');
+paintSound();
+sBtn.onclick=()=>{unlock();soundOn=!soundOn;paintSound();try{localStorage.setItem('ed-sound',soundOn?'1':'0')}catch(e){}};
 
-// ---------- spin ----------
+/* spin */
 function spin(){
-  if (spinning) return;
-  spinning = true;
+  if(spinning) return; spinning=true;
   document.querySelectorAll('.mkt').forEach(b=>b.disabled=true);
-  $('lever').classList.add('disabled'); $('hint').style.visibility='hidden';
+  $('lever').classList.add('off'); $('hint').style.visibility='hidden';
   $('machine').classList.add('spinning');
-
-  const resultKey = KEYS[rnd(3)];
-  const result = {key:resultKey, ...DECISIONS[resultKey]};
-  const h = cellH();
-  const t0 = performance.now();
-
-  const plans = reels.map((r,i) => {
-    const len = 40 + i*18 + (i===1?30:0);
-    const items = build(i, len, i===1 ? result : undefined);
-    const strip = r.querySelector('.strip');
-    strip.innerHTML = items.map(cellHTML).join('');
+  const key=KEYS[rnd(3)], res={key,...D[key]}, h=H(), t0=performance.now();
+  const plans=reels.map((r,i)=>{
+    const len=28+i*10+(i===1?14:0), s=r.querySelector('.strip');
+    s.innerHTML=build(i,len,i===1?res:null).map(cellHTML).join('');
     r.classList.add('blur');
-    return {strip, dist:(len-3)*h, dur:STOPS[i], done:false, lastCell:-1, reel:r};
+    return {s,r,dist:(len-3)*h,dur:STOPS[i],done:false,last:-1};
   });
-
-  const ease = t => 1 - Math.pow(1-t, 4);
-  function frame(now){
-    const el = now - t0;
-    $('bar').style.width = Math.min(100, el/SPIN_MS*100)+'%';
-    const left = Math.max(0, Math.ceil((SPIN_MS-el)/1000));
-    $('timer').textContent = left>0 ? `Вселенная думает… ${left}` : 'Готово!';
-    let all = true;
-    plans.forEach((p,i) => {
-      if (p.done) return;
-      const t = Math.min(1, el/p.dur), y = ease(t)*p.dist;
-      p.strip.style.transform = `translateY(${-y}px)`;
-      const c = Math.floor(y/h);
-      if (c !== p.lastCell){ p.lastCell = c; if (i===1) tone(220+rnd(200), .03, 'square', .025); }
-      if (t>=1){ p.done = true; p.reel.classList.remove('blur'); tone(140,.12,'triangle',.12); }
-      else all = false;
+  const ease=t=>1-Math.pow(1-t,4);
+  (function frame(now){
+    const el=now-t0;
+    $('bar').style.width=Math.min(100,el/SPIN_MS*100)+'%';
+    const left=Math.ceil((SPIN_MS-el)/1000);
+    $('status').textContent=left>0?`Вселенная думает · ${left}`:'Решено';
+    let all=true;
+    plans.forEach((p,i)=>{
+      if(p.done) return;
+      const t=Math.min(1,el/p.dur), y=ease(t)*p.dist;
+      p.s.style.transform=`translateY(${-y}px)`;
+      const c=Math.floor(y/h); if(c!==p.last){p.last=c; if(i===1) tone(900+rnd(300),.025,'triangle',.02);}
+      if(t>=1){p.done=true;p.r.classList.remove('blur');tone(180,.18,'sine',.12);}
+      else all=false;
     });
-    if (!all) requestAnimationFrame(frame); else setTimeout(()=>finish(result), 350);
-  }
-  requestAnimationFrame(frame);
+    if(!all) requestAnimationFrame(frame); else setTimeout(()=>finish(res),300);
+  })(t0);
 }
-
-function finish(result){
-  const ov = $('overlay');
-  ov.className = 'overlay ' + result.key;
-  $('verdict').textContent = pick(result.verdicts) + ' ' + pick(result.emoji);
-  $('prophecy').textContent = pick(result.prophecy);
+function finish(r){
+  const ov=$('overlay');
+  ov.className='overlay '+r.key;
+  $('vword').textContent=pick(r.verdicts).toUpperCase()+(r.key==='sell'?'!':'');
+  $('vtag').textContent=r.tag;
+  $('prophecy').textContent=pick(r.prophecy);
   void ov.offsetWidth; ov.classList.add('show');
-  fanfare(result.key);
-  if (result.key==='sell'){ document.body.classList.remove('shake'); void document.body.offsetWidth; document.body.classList.add('shake'); }
-  burst(result.key==='buy' ? [...result.emoji, ...MARKETS[market].fx] : result.emoji, result.key);
-
-  history.unshift({m:market, k:result.key, t:Date.now()});
-  history = history.slice(0,50);
-  try{ localStorage.setItem('ed-history', JSON.stringify(history)); }catch(e){}
+  chord(r.key);
+  if(navigator.vibrate) navigator.vibrate(r.key==='sell'?[80,60,80,60,200]:[60]);
+  if(r.key==='sell'){document.body.classList.remove('shake');void document.body.offsetWidth;document.body.classList.add('shake');}
+  setTimeout(()=>burst(r.key),450);
+  history.unshift({m:market,k:r.key,t:Date.now()}); history=history.slice(0,50);
+  try{localStorage.setItem('ed-history',JSON.stringify(history))}catch(e){}
   renderLog();
 }
-
 function reset(){
-  $('overlay').classList.remove('show');
-  spinning = false;
+  $('overlay').classList.remove('show'); spinning=false;
   document.querySelectorAll('.mkt').forEach(b=>b.disabled=false);
-  $('lever').classList.remove('disabled'); $('hint').style.visibility='visible';
-  $('machine').classList.remove('spinning');
-  $('timer').textContent = 'Тяни рычаг →'; $('bar').style.width = '0';
+  $('lever').classList.remove('off'); $('hint').style.visibility='visible';
+  $('machine').classList.remove('spinning'); $('status').textContent='Готов к игре'; $('bar').style.width='0';
 }
-$('again').onclick = reset;
-$('overlay').addEventListener('click', e => { if (e.target.id==='overlay') reset(); });
+$('again').onclick=reset;
+$('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')reset();});
 
-// ---------- log ----------
+/* ledger */
+const ML={fx:'Валюта',btc:'Биткоин',stocks:'Акции',options:'Опционы'};
 function renderLog(){
-  const ul = $('log');
-  if (!history.length){ ul.innerHTML = '<li class="empty">Пока пусто. Судьба ждёт.</li>'; $('stats').textContent=''; return; }
-  const mLabel = {fx:'💱 Валюта',btc:'₿ Биткоин',stocks:'📈 Акции',options:'🎯 Опционы'};
-  ul.innerHTML = history.slice(0,6).map(h => {
-    const d = DECISIONS[h.k], time = new Date(h.t).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-    return `<li><span>${time} · ${mLabel[h.m]}</span><b class="${d.cls}" style="filter:brightness(1.6)">${d.word}</b></li>`;
+  $('count').textContent='№ '+String(history.length+1).padStart(3,'0');
+  if(!history.length){$('log').innerHTML='<li class="empty">Пока пусто. Судьба ждёт.</li>';$('stats').textContent='';return;}
+  $('log').innerHTML=history.slice(0,5).map(h=>{
+    const t=new Date(h.t).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+    return `<li><span>${t} · ${ML[h.m]}</span><b class="b-${h.k}">${D[h.k].word}</b></li>`;
   }).join('');
-  const c = {buy:0,sell:0,hold:0}; history.forEach(h=>c[h.k]++);
-  $('stats').innerHTML = `Всего предсказаний: ${history.length} · 🟢 ${c.buy} · 🔴 ${c.sell} · 🔵 ${c.hold}`;
+  const c={buy:0,sell:0,hold:0}; history.forEach(h=>c[h.k]++);
+  $('stats').textContent=`Всего ${history.length} · купить ${c.buy} · продать ${c.sell} · держать ${c.hold}`;
 }
 
-// ---------- markets ----------
-document.querySelectorAll('.mkt').forEach(b => b.onclick = () => {
-  if (spinning) return;
+/* markets */
+document.querySelectorAll('.mkt').forEach(b=>b.onclick=()=>{
+  if(spinning) return; unlock();
   document.querySelectorAll('.mkt').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active'); market = b.dataset.m;
-  $('mname').textContent = MARKETS[market].name;
-  tone(660,.08,'triangle',.06);
-  renderIdle();
+  b.classList.add('active'); market=b.dataset.m; $('mname').textContent=MARKETS[market].name;
+  tone(1200,.12,'sine',.04); idle();
 });
 
-// ---------- lever ----------
-const lever = $('lever'), knob = $('knob'), rod = $('rod');
-const TOP = 20, BOTTOM = 232, MID = 150; // knob y range, rod pivot y
-function setKnob(y){
-  knob.style.top = y+'px';
-  const cy = y+24;
-  rod.style.top = Math.min(cy,MID)+'px';
-  rod.style.height = Math.abs(MID-cy)+'px';
-}
-setKnob(TOP);
-let drag = null;
-lever.addEventListener('pointerdown', e => {
-  if (spinning) return;
-  drag = {startY:e.clientY, y:TOP, pulled:false};
-  lever.setPointerCapture(e.pointerId); lever.style.cursor='grabbing';
+/* lever */
+const lever=$('lever'), knob=$('knob'), rod=$('rod');
+let TOP,BOTTOM,MID,KS;
+function geom(){ const lh=lever.offsetHeight; KS=knob.offsetWidth; TOP=4; BOTTOM=lh-KS-4; MID=lh/2; setKnob(TOP); }
+function setKnob(y){ knob.style.top=y+'px'; const cy=y+KS/2; rod.style.top=Math.min(cy,MID)+'px'; rod.style.height=Math.abs(MID-cy)+'px'; }
+geom(); addEventListener('resize',()=>{ if(!spinning) geom(); });
+let drag=null;
+lever.addEventListener('pointerdown',e=>{
+  if(spinning) return; unlock(); e.preventDefault();
+  drag={sy:e.clientY,y:TOP,pulled:false}; lever.setPointerCapture(e.pointerId);
 });
-lever.addEventListener('pointermove', e => {
-  if (!drag) return;
-  drag.y = Math.max(TOP, Math.min(BOTTOM, TOP + (e.clientY - drag.startY)));
-  setKnob(drag.y);
-  if (drag.y > BOTTOM-25 && !drag.pulled){ drag.pulled = true; tone(90,.15,'sawtooth',.1); }
+lever.addEventListener('pointermove',e=>{
+  if(!drag) return;
+  drag.y=Math.max(TOP,Math.min(BOTTOM,TOP+(e.clientY-drag.sy))); setKnob(drag.y);
+  if(drag.y>BOTTOM-20&&!drag.pulled){drag.pulled=true;tone(110,.2,'sine',.15);}
 });
 function release(){
-  if (!drag) return;
-  const pulled = drag.pulled, moved = drag.y > TOP+6;
-  drag = null; lever.style.cursor='';
-  if (!pulled && !moved){ autoPull(); return; } // a plain click pulls it too
-  springBack(pulled);
+  if(!drag) return; const {pulled,y}=drag; drag=null;
+  if(!pulled&&y<TOP+6){autoPull();return;}
+  back(pulled);
 }
-lever.addEventListener('pointerup', release);
-lever.addEventListener('pointercancel', release);
-function springBack(fire){
-  const from = parseFloat(knob.style.top), t0 = performance.now();
-  if (fire) spin();
-  (function step(now){
-    const t = Math.min(1,(now-t0)/450);
-    const bounce = Math.sin(t*Math.PI*3)*(1-t)*12;
-    setKnob(from + (TOP-from)*(1-Math.pow(1-t,3)) - bounce);
-    if (t<1) requestAnimationFrame(step); else setKnob(TOP);
-  })(t0);
+lever.addEventListener('pointerup',release); lever.addEventListener('pointercancel',release);
+function back(fire){
+  const from=parseFloat(knob.style.top), t0=performance.now(); if(fire) spin();
+  (function st(n){const t=Math.min(1,(n-t0)/500); setKnob(from+(TOP-from)*(1-Math.pow(1-t,3))-Math.sin(t*Math.PI*3)*(1-t)*10); if(t<1)requestAnimationFrame(st); else setKnob(TOP);})(t0);
 }
 function autoPull(){
-  if (spinning) return;
-  const t0 = performance.now();
-  (function step(now){
-    const t = Math.min(1,(now-t0)/260);
-    setKnob(TOP + (BOTTOM-TOP)*t*t);
-    if (t<1) requestAnimationFrame(step); else { tone(90,.15,'sawtooth',.1); springBack(true); }
-  })(t0);
+  if(spinning) return; const t0=performance.now();
+  (function st(n){const t=Math.min(1,(n-t0)/260); setKnob(TOP+(BOTTOM-TOP)*t*t); if(t<1)requestAnimationFrame(st); else {tone(110,.2,'sine',.15);back(true);}})(t0);
 }
-document.addEventListener('keydown', e => {
-  if (e.code==='Space'){ e.preventDefault(); if ($('overlay').classList.contains('show')) reset(); else autoPull(); }
-});
+document.addEventListener('keydown',e=>{ if(e.code==='Space'){e.preventDefault();unlock(); $('overlay').classList.contains('show')?reset():autoPull();} });
 
-// ---------- particles ----------
-const cv = $('fx'), cx = cv.getContext('2d');
-let parts = [];
-function size(){ cv.width = innerWidth*devicePixelRatio; cv.height = innerHeight*devicePixelRatio; }
-size(); addEventListener('resize', size);
-function burst(emojis, kind){
-  const W = innerWidth, H = innerHeight;
-  for (let i=0;i<140;i++){
-    const fromTop = kind!=='buy';
-    parts.push({
-      e: pick(emojis),
-      x: fromTop ? Math.random()*W : W/2 + (Math.random()-.5)*120,
-      y: fromTop ? -40 - Math.random()*H : H + 20,
-      vx: fromTop ? (Math.random()-.5)*2 : (Math.random()-.5)*14,
-      vy: fromTop ? 2+Math.random()*4 : -(12+Math.random()*12),
-      g: fromTop ? .05 : .32,
-      r: Math.random()*6, vr:(Math.random()-.5)*.2,
-      s: 22+Math.random()*30, life: 260
-    });
+/* gold particles */
+const cv=$('fx'), cx=cv.getContext('2d'); let parts=[], anim=false;
+function size(){cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio;} size(); addEventListener('resize',size);
+const PAL={buy:['#fbefc4','#e3c27a','#7fe0b8'],sell:['#fbefc4','#e3c27a','#ff7b8b'],hold:['#fbefc4','#e3c27a','#a9c4ff']};
+function burst(k){
+  const W=innerWidth,Hh=innerHeight,n=W<600?90:160;
+  for(let i=0;i<n;i++){
+    const glyph=Math.random()<.18;
+    parts.push({x:Math.random()*W,y:-20-Math.random()*Hh*.6,vx:(Math.random()-.5)*1.2,vy:1+Math.random()*2.5,
+      w:glyph?0:3+Math.random()*7,h:2+Math.random()*3,r:Math.random()*6,vr:(Math.random()-.5)*.15,
+      c:pick(PAL[k]),g:glyph?pick(MARKETS[market].sym):null,s:14+Math.random()*16,ph:Math.random()*6,life:320});
   }
-  if (!animating) loop();
+  if(!anim) loop();
 }
-let animating = false;
 function loop(){
-  animating = true;
-  const d = devicePixelRatio;
-  cx.setTransform(d,0,0,d,0,0);
-  cx.clearRect(0,0,innerWidth,innerHeight);
-  parts.forEach(p => {
-    p.vy += p.g; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life--;
-    cx.save(); cx.translate(p.x,p.y); cx.rotate(p.r);
-    cx.globalAlpha = Math.min(1, p.life/40);
-    cx.font = p.s+'px serif'; cx.textAlign='center'; cx.textBaseline='middle';
-    cx.fillText(p.e,0,0); cx.restore();
+  anim=true; const d=devicePixelRatio; cx.setTransform(d,0,0,d,0,0); cx.clearRect(0,0,innerWidth,innerHeight);
+  parts.forEach(p=>{
+    p.ph+=.05; p.x+=p.vx+Math.sin(p.ph)*.6; p.y+=p.vy; p.r+=p.vr; p.life--;
+    cx.save(); cx.translate(p.x,p.y); cx.rotate(p.r); cx.globalAlpha=Math.min(1,p.life/50);
+    if(p.g){cx.fillStyle=p.c;cx.font=`700 ${p.s}px 'Playfair Display',serif`;cx.textAlign='center';cx.fillText(p.g,0,0);}
+    else{cx.fillStyle=p.c;cx.scale(1,Math.abs(Math.cos(p.ph*2)));cx.fillRect(-p.w/2,-p.h/2,p.w,p.h);}
+    cx.restore();
   });
-  parts = parts.filter(p => p.life>0 && p.y < innerHeight+80);
-  if (parts.length) requestAnimationFrame(loop); else { animating = false; cx.clearRect(0,0,innerWidth,innerHeight); }
+  parts=parts.filter(p=>p.life>0&&p.y<innerHeight+40);
+  if(parts.length) requestAnimationFrame(loop); else {anim=false;cx.clearRect(0,0,innerWidth,innerHeight);}
 }
 
-renderIdle(); renderLog();
+idle(); renderLog();
+if(document.fonts) document.fonts.ready.then(geom);
 </script>
 </body>
 </html>
