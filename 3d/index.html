@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#07040c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ED Casino — оракул трейдинга</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- loading / entrance -->
+<div id="intro">
+  <div class="intro-inner">
+    <div class="intro-kicker">Добро пожаловать в</div>
+    <div class="intro-logo">ED<span>casino</span></div>
+    <div class="intro-sub">Частный оракул трейдинга Эдуарда</div>
+    <div class="loadbar"><i id="loadfill"></i></div>
+    <div class="loadtxt" id="loadtxt">Загружаем зал… 0%</div>
+    <button id="enter" disabled>Войти в казино</button>
+    <div class="intro-note">🔊 Включи звук — здесь разговаривают</div>
+  </div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="top">
+    <div class="brand">ED<span>casino</span></div>
+    <div class="topr">
+      <div class="chip" id="streak" title="Предсказаний">🎰 <b id="spins">0</b></div>
+      <button class="chip btn" id="soundBtn" title="Звук">🔊</button>
+    </div>
+  </div>
+
+  <div class="dialog" id="dialog">
+    <div class="d-name" id="dname">Мадам Фортуна</div>
+    <div class="d-text" id="dtext"></div>
+    <div class="d-next">▼</div>
+  </div>
+
+  <div class="bottom">
+    <div class="hint" id="hint">Тяни рычаг ⤵ · или пробел</div>
+    <div class="markets" id="markets">
+      <button class="mkt on" data-m="fx"><span>💱</span>Валюта</button>
+      <button class="mkt" data-m="btc"><span>₿</span>Биткоин</button>
+      <button class="mkt" data-m="stocks"><span>📈</span>Акции</button>
+      <button class="mkt" data-m="options"><span>🎯</span>Опционы</button>
+    </div>
+  </div>
+
+  <div class="banner" id="banner">
+    <div class="b-kicker" id="bkicker">Вердикт вселенной</div>
+    <div class="b-main" id="bmain"></div>
+    <div class="b-sub" id="bsub"></div>
+    <button class="b-again" id="again">Ещё раз</button>
+  </div>
+  <div class="flash" id="flash"></div>
+</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
