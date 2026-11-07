@@ -9,7 +9,7 @@
 <title>Монетка Эда · 5 рублей</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@700&family=Unbounded:wght@500;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@700&family=Playfair+Display:wght@900&family=Unbounded:wght@500;800;900&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#f6efe6;--muted:#a8998a;--silver:linear-gradient(180deg,#ffffff 0%,#d9dde3 40%,#8e949c 60%,#e9ecef 100%)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -42,6 +42,16 @@ body{touch-action:none;-webkit-user-select:none;user-select:none;overscroll-beha
 .hist{display:flex;gap:5px}
 .hist i{width:9px;height:9px;border-radius:50%;background:#cfd3d8;box-shadow:inset 0 -2px 0 rgba(0,0,0,.25)}
 .hist i.r{background:#c89a4a}
+#charge{position:fixed;left:50%;top:50%;width:200px;height:200px;transform:translate(-50%,-50%);pointer-events:none;opacity:0;transition:opacity .2s;--p:0;--c:#fff}
+#charge.on{opacity:1}
+#charge svg{width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+#charge circle{fill:none;stroke-width:3.2}
+#charge .bg{stroke:rgba(255,255,255,.16)}
+#charge .fg{stroke:var(--c);stroke-linecap:round;stroke-dasharray:calc(var(--p)*100) 100;filter:drop-shadow(0 0 6px var(--c))}
+#pct{position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);font:800 13px Unbounded,sans-serif;color:var(--c);text-shadow:0 2px 8px #000;letter-spacing:.08em}
+#dot{position:fixed;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;pointer-events:none;opacity:0;
+  background:radial-gradient(circle,#fff 0 25%,rgba(255,210,122,.6) 45%,transparent 70%);transition:opacity .15s}
+#charge:not(.on)~#dot{opacity:0!important}
 #loading{position:fixed;inset:0;display:grid;place-items:center;background:#0d0906;font:500 11px Unbounded,sans-serif;letter-spacing:.35em;color:var(--muted);transition:opacity .6s}
 #loading.gone{opacity:0;pointer-events:none}
 </style>
@@ -63,10 +73,12 @@ body{touch-action:none;-webkit-user-select:none;user-select:none;overscroll-beha
     <div class="sub" id="sub"></div>
   </div>
   <div class="bottom">
-    <div class="hint" id="hint">Нажми на монетку</div>
+    <div class="hint" id="hint">Зажми монетку и отпусти</div>
     <div class="stats"><span>Орёл <b id="so">0</b></span><span class="hist" id="hist"></span><span>Решка <b id="sr">0</b></span></div>
   </div>
 </div>
+<div id="charge"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="46"/><circle class="fg" cx="50" cy="50" r="46" pathLength="100"/></svg><span id="pct"></span></div>
+<div id="dot"></div>
 <div id="loading">ЧЕКАНИМ МОНЕТУ…</div>
 
 <script type="module">
@@ -255,12 +267,26 @@ function drawEagle(g) {
 function drawObverse(g) {
   baseDisc(g);
   g.fillStyle = REL;
-  arcText(g, 'РОССИЙСКАЯ ФЕДЕРАЦИЯ', 404, -Math.PI / 2, true, 50, 4);
-  arcText(g, 'БАНК РОССИИ', 404, Math.PI / 2, false, 50, 5);
-  g.save(); g.translate(512, 478); g.scale(1.2, 1.2); drawEagle(g); g.restore();
-  g.fillStyle = REL; g.font = `700 46px ${F_FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText('2024', 512, 728);
-  g.font = `700 24px ${F_FONT}`; g.fillText('ММД', 650, 728);
+  arcText(g, 'ОРАКУЛ ЭДУАРДА', 404, -Math.PI / 2, true, 52, 6);
+  arcText(g, 'ВСЕЛЕННАЯ РЕШИТ', 404, Math.PI / 2, false, 50, 6);
+  // beaded inner ring
+  for (let i = 0; i < 72; i++) { const a = i / 72 * Math.PI * 2; g.beginPath(); g.arc(512 + 352 * Math.cos(a), 512 + 352 * Math.sin(a), 6, 0, 7); g.fill(); }
+  g.strokeStyle = LINE; g.lineWidth = 4; g.beginPath(); g.arc(512, 512, 334, 0, 7); g.stroke();
+  // sunburst behind the monogram
+  g.strokeStyle = 'rgb(132,132,132)'; g.lineWidth = 3;
+  for (let i = 0; i < 48; i++) { const a = i / 48 * Math.PI * 2; g.beginPath(); g.moveTo(512 + 210 * Math.cos(a), 512 + 210 * Math.sin(a)); g.lineTo(512 + 318 * Math.cos(a), 512 + 318 * Math.sin(a)); g.stroke(); }
+  g.fillStyle = FIELD; g.beginPath(); g.arc(512, 512, 205, 0, 7); g.fill();
+  g.strokeStyle = REL; g.lineWidth = 10; g.beginPath(); g.arc(512, 512, 205, 0, 7); g.stroke();
+  // monogram
+  g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  g.fillStyle = HI; g.font = `900 250px "Playfair Display",Georgia,serif`;
+  g.fillText('ED', 512, 592);
+  g.strokeStyle = LINE; g.lineWidth = 3; g.strokeText('ED', 512, 592);
+  // stars + year
+  g.fillStyle = REL;
+  const star = (x, y, r) => { g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * .45 : r; g.lineTo(x + rr * Math.cos(a), y + rr * Math.sin(a)); } g.closePath(); g.fill(); };
+  star(512, 352, 22); star(420, 372, 13); star(604, 372, 13);
+  g.font = `700 44px ${F_FONT}`; g.textBaseline = 'middle'; g.fillText('2026', 512, 660);
 }
 function drawReverse(g) {
   baseDisc(g);
@@ -359,7 +385,7 @@ function makeEdge() {
 const coin = new THREE.Group(); scene.add(coin);
 const coinQ = new THREE.Quaternion(), coinP = new THREE.Vector3(0, H / 2, 0);
 async function buildCoin() {
-  try { await Promise.race([document.fonts.load(`700 50px ${F_FONT}`), new Promise(r => setTimeout(r, 2500))]); } catch (e) {}
+  try { await Promise.race([Promise.all([document.fonts.load(`700 50px ${F_FONT}`), document.fonts.load('900 250px "Playfair Display"')]), new Promise(r => setTimeout(r, 3000))]); } catch (e) {}
   const ob = makeFace(drawObverse), rv = makeFace(drawReverse), ed = makeEdge();
   const faceMat = t => new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 1, ...t, normalScale: new THREE.Vector2(1.1, 1.1) });
   const edgeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0.3, ...ed });
@@ -414,13 +440,13 @@ const AU = {
     g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     s.connect(fl).connect(g).connect(this.bus); s.start(t, rand(0, 0.8), dur + 0.05);
   },
-  flick(spinHz) {
+  flick(spinHz, v = 1) {
     if (!this.ctx) return; const t = this.ctx.currentTime;
-    this.hit(t, 0.55, 3200, 0.7, 0.014, 'highpass'); this.hit(t, 0.3, 650, 1, 0.025);
+    this.hit(t, 0.55 * v, 3200, 0.7, 0.014, 'highpass'); this.hit(t, 0.3 * v, 650, 1, 0.025);
     const trem = this.ctx.createGain(); trem.gain.value = 0.55; trem.connect(this.bus);
     const lfo = this.ctx.createOscillator(); lfo.frequency.value = spinHz; const dg = this.ctx.createGain(); dg.gain.value = 0.45;
     lfo.connect(dg).connect(trem.gain); lfo.start(t); lfo.stop(t + 2.2);
-    this.ring(t + 0.004, 0.17, 1.9, trem);
+    this.ring(t + 0.004, 0.17 * (0.5 + 0.5 * v), 1.2 + 0.8 * v, trem);
   },
   impact(v) {
     if (!this.ctx) return; const t = this.ctx.currentTime;
@@ -446,31 +472,43 @@ const faceUp = q => UP.clone().applyQuaternion(q).y > 0 ? 'orel' : 'reshka';
 let state = 'loading', S = null;
 const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), tilt = new THREE.Vector3();
 
-function toss() {
+function toss(o = {}) {
   if (state !== 'rest') return;
   AU.init();
-  const result = rnd(2) ? 'orel' : 'reshka';
-  const n = 14 + 2 * rnd(4) + (result === faceUp(coinQ) ? 0 : 1);
-  const beta = rand(-0.45, 0.45) + (rnd(2) ? 0 : Math.PI);
-  const axis = new THREE.Vector3(Math.cos(beta), 0, Math.sin(beta));
+  const f = clamp(o.force ?? rand(0.45, 0.75), 0.1, 1);
+  const off = o.off ? o.off.clone() : new THREE.Vector3(rand(-1, 1), 0, rand(-1, 1)).normalize().multiplyScalar(rand(0.3, 0.9));
+  const m = clamp(off.length(), 0, 1);
+  const result = rnd(2) ? 'orel' : 'reshka';          // honest 50/50, independent of how you tap
+  let axis;
+  if (m < 0.08) { const b = rand(0, 6.283); axis = new THREE.Vector3(Math.cos(b), 0, Math.sin(b)); }
+  else axis = off.clone().cross(UP).normalize();        // the pressed point flips upward
+  let n = Math.max(3, Math.round(3 + (6 + 18 * m) * (0.3 + 0.7 * f) + rand(-1, 1)));
+  const wantEven = result === faceUp(coinQ);
+  if ((n % 2 === 0) !== wantEven) n += (n > 3 && rnd(2)) ? -1 : 1;
+  const c = o.tilt || 0;
   const delta = rand(0.2, 0.42) * (rnd(2) ? 1 : -1);
-  const apex = rand(5.6, 6.8), y0 = coinP.y, yL = ySup(delta);
-  const vy = Math.sqrt(2 * G * (apex - y0));
+  const y0 = ySup(c), yL = ySup(delta);
+  const apex = H / 2 + (1.5 + 6.5 * f) * (1 - 0.3 * m);
+  const vy = Math.sqrt(2 * G * Math.max(apex - y0, 0.3));
   const T = (vy + Math.sqrt(vy * vy - 2 * G * (yL - y0))) / G;
-  const target = new THREE.Vector3(rand(-1.1, 1.1), 0, rand(-0.7, 0.9));
+  const vland = G * T - vy;
+  const dir = m > 0.08 ? off.clone().normalize() : new THREE.Vector3();
+  const target = coinP.clone().addScaledVector(dir, -0.9 * f).add(new THREE.Vector3(rand(-.4, .4), 0, rand(-.4, .4)));
+  target.y = 0; if (target.length() > 1.6) target.setLength(1.6);
   const vxz = new THREE.Vector3(target.x - coinP.x, 0, target.z - coinP.z).divideScalar(T + 0.3);
   const bounces = []; let yS = yL, dS = delta, tAcc = T;
   const d1 = -delta * rand(.35, .55), d2 = -d1 * rand(.3, .5);
-  for (const [vb, dE] of [[rand(7, 9), d1], [rand(3, 4.2), d2]]) {
+  const vb1 = clamp(vland * rand(.24, .3), 2.4, 9.5), vb2 = Math.max(1.6, vb1 * rand(.4, .5));
+  for (const [vb, dE] of [[vb1, d1], [vb2, d2]]) {
     const yE = ySup(dE), Tb = (vb + Math.sqrt(vb * vb - 2 * G * (yE - yS))) / G;
     bounces.push({ t0: tAcc, T: Tb, v: vb, yS, dS, dE }); tAcc += Tb; yS = yE; dS = dE;
   }
   S = { t0: performance.now() / 1000, Q0: coinQ.clone(), P0: coinP.clone(), axis, n, delta, vy, T, vxz, bounces, tB: tAcc,
-        psiRate: rand(-1.6, 1.6), y0, result, bi: -1, landed: false };
+        psiRate: (o.psi || 0) + rand(-0.8, 0.8), y0, c, f, vland, result, bi: -1, landed: false };
   state = 'fly';
-  const omega = (n * Math.PI + delta) / T;
-  AU.flick(omega / Math.PI);
-  buzz(12);
+  const omega = (n * Math.PI + delta + c) / T;
+  AU.flick(omega / Math.PI, 0.35 + 0.65 * f);
+  buzz(Math.round(8 + 14 * f));
   $('res').classList.remove('on'); $('sub').style.opacity = 0; $('hint').classList.add('off');
 }
 const hs = t => t < S.T ? t : S.T + 0.3 * (t - S.T);
@@ -485,12 +523,12 @@ function simulate(now, dt) {
     const psi = S.psiRate * hs(t);
     coinP.x = S.P0.x + S.vxz.x * hs(t); coinP.z = S.P0.z + S.vxz.z * hs(t);
     if (t < S.T) {
-      const th = (S.n * Math.PI + S.delta) * t / S.T;
+      const th = -S.c + (S.n * Math.PI + S.delta + S.c) * t / S.T;
       orient(th, psi);
       coinP.y = S.y0 + S.vy * t - G * t * t / 2;
       if (t < 0.12) coinP.y = Math.max(coinP.y, ySup(th));
     } else if (t < S.tB) {
-      if (!S.landed) { S.landed = true; AU.impact(1); buzz(25); }
+      if (!S.landed) { S.landed = true; AU.impact(clamp(S.vland / 34, 0.25, 1)); buzz(25); }
       let bi = S.bounces.findIndex(b => t >= b.t0 && t < b.t0 + b.T);
       if (bi < 0) bi = S.bounces.length - 1;
       if (bi !== S.bi) { if (S.bi >= 0) { AU.impact(S.bounces[S.bi].v / 32 + 0.12); buzz(10); } S.bi = bi; }
@@ -546,7 +584,7 @@ function showResult() {
   $('res').textContent = f === 'orel' ? 'ОРЁЛ' : 'РЕШКА';
   $('sub').textContent = LINES[f][rnd(3)];
   $('res').classList.add('on'); $('sub').style.opacity = 1; $('hint').classList.remove('off');
-  $('hint').textContent = 'Ещё раз? Нажми на монетку';
+  $('hint').textContent = 'Дольше держишь — сильнее · ближе к краю — сильнее крутит';
   renderStats();
 }
 renderStats();
@@ -555,15 +593,90 @@ renderStats();
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 const hitSphere = new THREE.Mesh(new THREE.SphereGeometry(1.5, 12, 8), new THREE.MeshBasicMaterial({ visible: false }));
 scene.add(hitSphere);
+const charge = { on: false, t0: 0, off: null, pmax: 0, usePressure: false, y: 0, t: 0, vy: 0, x0: 0, psi: 0, tilt: 0, level: 0, id: null };
+const plane = new THREE.Plane(), hitP = new THREE.Vector3();
+function planeOffset(cx, cy) {
+  ndc.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
+  plane.set(UP, -coinP.y);
+  if (!ray.ray.intersectPlane(plane, hitP)) return null;
+  const o = hitP.clone().sub(coinP).setY(0).divideScalar(R);
+  if (o.length() > 1) o.setLength(1);
+  return o;
+}
+function startCharge(off, e) {
+  if (state !== 'rest' || charge.on) return;
+  AU.init();
+  Object.assign(charge, { on: true, t0: performance.now() / 1000, off, pmax: 0, usePressure: false, vy: 0, psi: 0, tilt: 0, level: 0 });
+  if (e) { charge.y = e.clientY; charge.x0 = e.clientX; charge.t = performance.now(); readPressure(e); }
+  $('charge').classList.add('on');
+}
+function readPressure(e) {
+  if (e.pointerType !== 'mouse' && e.pressure > 0 && e.pressure !== 0.5 && e.pressure !== 1) { charge.usePressure = true; charge.pmax = Math.max(charge.pmax, e.pressure); }
+}
+function chargeLevel() {
+  const hold = performance.now() / 1000 - charge.t0;
+  const fh = Math.pow(clamp(hold / 1.1, 0, 1), 0.85);
+  const fp = charge.usePressure ? clamp((charge.pmax - 0.1) / 0.8, 0, 1) : 0;
+  return Math.max(fh, fp);
+}
+function releaseCharge() {
+  if (!charge.on) return;
+  charge.on = false; $('charge').classList.remove('on');
+  const swipe = clamp(-charge.vy / 2600, 0, 0.5);
+  const force = clamp(0.12 + 0.88 * chargeLevel() + swipe, 0.12, 1);
+  coin.quaternion.copy(coinQ);
+  toss({ off: charge.off, force, tilt: charge.tilt, psi: charge.psi });
+}
 addEventListener('pointerdown', e => {
   if (e.target.closest('a,button')) return;
-  toss();
+  if (state !== 'rest') return;
+  charge.id = e.pointerId;
+  try { e.target.setPointerCapture && e.target.setPointerCapture(e.pointerId); } catch (err) {}
+  startCharge(planeOffset(e.clientX, e.clientY), e);
 });
 addEventListener('pointermove', e => {
+  if (charge.on && e.pointerId === charge.id) {
+    readPressure(e);
+    const now = performance.now(), dt = Math.max(1, now - charge.t);
+    const v = (e.clientY - charge.y) / dt * 1000;
+    charge.vy = charge.vy * 0.6 + v * 0.4; charge.y = e.clientY; charge.t = now;
+    charge.psi = clamp((e.clientX - charge.x0) / innerWidth * 9, -5, 5);
+    return;
+  }
   ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
   document.body.style.cursor = state === 'rest' && ray.intersectObject(hitSphere).length ? 'pointer' : 'default';
 });
-addEventListener('keydown', e => { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); toss(); } });
+addEventListener('pointerup', e => { if (e.pointerId === charge.id) releaseCharge(); });
+addEventListener('pointercancel', () => { if (charge.on) { charge.on = false; $('charge').classList.remove('on'); coin.quaternion.copy(coinQ); coin.position.copy(coinP); } });
+addEventListener('keydown', e => {
+  if ((e.code === 'Space' || e.code === 'Enter') && !e.repeat) { e.preventDefault(); startCharge(new THREE.Vector3(rand(-1, 1), 0, rand(-1, 1)).normalize().multiplyScalar(rand(.3, .9)), null); }
+});
+addEventListener('keyup', e => { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); releaseCharge(); } });
+const scr = new THREE.Vector3(), camRight = new THREE.Vector3();
+function toScreen(v) { scr.copy(v).project(camera); return [(scr.x + 1) / 2 * innerWidth, (1 - scr.y) / 2 * innerHeight]; }
+function updateCharge() {
+  if (!charge.on) return;
+  const lv = chargeLevel(); charge.level = lv;
+  const m = charge.off ? charge.off.length() : 0;
+  charge.tilt = m > 0.08 ? (0.025 + 0.08 * lv) * m : 0;
+  if (charge.tilt > 0) {
+    const ax = charge.off.clone().cross(UP).normalize();
+    coin.quaternion.copy(qa.setFromAxisAngle(ax, -charge.tilt)).multiply(coinQ);
+    coin.position.set(coinP.x, ySup(charge.tilt), coinP.z);
+  }
+  const [cx, cy] = toScreen(coinP);
+  camRight.setFromMatrixColumn(camera.matrixWorld, 0);
+  const [ex] = toScreen(coinP.clone().addScaledVector(camRight, R * 1.32));
+  const rad = Math.abs(ex - cx);
+  const el = $('charge'); el.style.left = cx + 'px'; el.style.top = cy + 'px'; el.style.width = el.style.height = rad * 2 + 'px';
+  el.style.setProperty('--p', lv);
+  el.style.setProperty('--c', lv < 0.5 ? '#f3f5f7' : lv < 0.85 ? '#ffd27a' : '#ff6a4a');
+  $('pct').textContent = Math.round((0.12 + 0.88 * lv) * 100) + '%';
+  if (charge.off) {
+    const [dx, dy] = toScreen(coinP.clone().addScaledVector(charge.off, R * 0.98));
+    $('dot').style.left = dx + 'px'; $('dot').style.top = dy + 'px'; $('dot').style.opacity = 1;
+  } else $('dot').style.opacity = 0;
+}
 $('snd').addEventListener('click', () => { AU.setOn(!AU.on); $('snd').textContent = AU.on ? '🔊' : '🔇'; });
 document.addEventListener('visibilitychange', () => { if (AU.ctx) document.hidden ? AU.ctx.suspend() : AU.ctx.resume(); });
 
@@ -574,6 +687,7 @@ function frame() {
   let now = performance.now() / 1000; const dt = Math.min(now - last, 0.05); last = now;
   if (FREEZE !== null && S) now = S.t0 + FREEZE;
   simulate(now, dt);
+  updateCharge();
   hitSphere.position.copy(coinP);
   const cy = coinP.y - H / 2, bob = Math.sin(now * 0.5) * 0.04;
   camPos.set(camBase.x + coinP.x * 0.15 + Math.sin(now * 0.31) * 0.05, camBase.y + cy * 0.55 + bob, camBase.z + cy * 0.75 + coinP.z * 0.1);
@@ -590,7 +704,7 @@ buildCoin().then(() => {
   state = 'rest'; $('loading').classList.add('gone');
   requestAnimationFrame(frame);
 });
-window.__coin = { toss, state: () => state, faceUp: () => faceUp(coinQ), freeze: t => { FREEZE = t; } };
+window.__coin = { startCharge, releaseCharge, charge, V: THREE.Vector3, toss, state: () => state, faceUp: () => faceUp(coinQ), freeze: t => { FREEZE = t; } };
 </script>
 </body>
 </html>
