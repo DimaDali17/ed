@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0d0906">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Монетка Эда · 5 рублей</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@700&family=Unbounded:wght@500;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#f6efe6;--muted:#a8998a;--silver:linear-gradient(180deg,#ffffff 0%,#d9dde3 40%,#8e949c 60%,#e9ecef 100%)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#0d0906;color:var(--ink);font-family:Unbounded,system-ui,sans-serif}
+body{touch-action:none;-webkit-user-select:none;user-select:none;overscroll-behavior:none}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+.vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 65% at 50% 52%,transparent 55%,rgba(0,0,0,.55) 100%)}
+.ui{position:fixed;inset:0;pointer-events:none}
+.ui a,.ui button{pointer-events:auto}
+.top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;
+  padding:calc(14px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 0 calc(16px + env(safe-area-inset-left))}
+.chip{display:inline-flex;align-items:center;gap:6px;font:600 12px Unbounded,sans-serif;letter-spacing:.06em;color:var(--ink);text-decoration:none;
+  background:rgba(20,14,10,.55);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:9px 14px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer}
+.head{position:absolute;left:0;right:0;top:calc(64px + env(safe-area-inset-top));text-align:center}
+.kick{font:500 10px Unbounded,sans-serif;letter-spacing:.45em;text-transform:uppercase;color:var(--muted)}
+.res{font:900 clamp(44px,11vw,104px)/1 Unbounded,sans-serif;letter-spacing:-.01em;margin-top:10px;
+  background:var(--silver);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 6px 18px rgba(0,0,0,.6));opacity:0;transform:translateY(14px) scale(.92);transition:opacity .45s,transform .55s cubic-bezier(.2,1.4,.4,1)}
+.res.on{opacity:1;transform:none}
+.sub{font:500 14px Unbounded,sans-serif;color:#e6d9c8;margin-top:10px;min-height:20px;text-shadow:0 2px 10px #000;transition:opacity .3s}
+.bottom{position:absolute;left:0;right:0;bottom:0;text-align:center;padding:0 16px calc(22px + env(safe-area-inset-bottom))}
+.hint{font:600 11px Unbounded,sans-serif;letter-spacing:.28em;text-transform:uppercase;color:#f3d9a8;text-shadow:0 2px 10px #000;animation:pulse 1.8s infinite;margin-bottom:14px}
+.hint.off{visibility:hidden}
+@keyframes pulse{50%{opacity:.35}}
+.stats{display:inline-flex;gap:18px;align-items:center;font:600 12px Unbounded,sans-serif;color:var(--ink);
+  background:rgba(20,14,10,.55);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:10px 18px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.stats b{color:#fff}
+.hist{display:flex;gap:5px}
+.hist i{width:9px;height:9px;border-radius:50%;background:#cfd3d8;box-shadow:inset 0 -2px 0 rgba(0,0,0,.25)}
+.hist i.r{background:#c89a4a}
+#loading{position:fixed;inset:0;display:grid;place-items:center;background:#0d0906;font:500 11px Unbounded,sans-serif;letter-spacing:.35em;color:var(--muted);transition:opacity .6s}
+#loading.gone{opacity:0;pointer-events:none}
+</style>
+<script type="importmap">
+{ "imports": { "three": "../3d/vendor/three.module.min.js", "three/addons/": "../3d/vendor/addons/" } }
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="vignette"></div>
+<div class="ui">
+  <div class="top">
+    <a class="chip" href="../">← ED</a>
+    <button class="chip" id="snd" aria-label="Звук">🔊</button>
+  </div>
+  <div class="head">
+    <div class="kick">Монетка Эда · 5 ₽</div>
+    <div class="res" id="res"></div>
+    <div class="sub" id="sub"></div>
+  </div>
+  <div class="bottom">
+    <div class="hint" id="hint">Нажми на монетку</div>
+    <div class="stats"><span>Орёл <b id="so">0</b></span><span class="hist" id="hist"></span><span>Решка <b id="sr">0</b></span></div>
+  </div>
+</div>
+<div id="loading">ЧЕКАНИМ МОНЕТУ…</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* ---------------------------------------------------------------- utils */
+const $ = id => document.getElementById(id);
+const rnd = n => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; };
+const rand = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const MOBILE = matchMedia('(pointer:coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
+
+/* coin dimensions: 5 ₽ = Ø25 mm, 1.8 mm thick → radius 1 */
+const R = 1, H = 0.144, BV = 0.026, INS = 0.03;
+const G = 60;                      // gravity (scene units/s²)
+
+/* ---------------------------------------------------------------- renderer */
+const renderer = new THREE.WebGLRenderer({ canvas: $('c'), antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const maxAniso = renderer.capabilities.getMaxAnisotropy();
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0906);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.03).texture;
+scene.environmentIntensity = 0.6;
+
+const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.1, 200);
+const camBase = new THREE.Vector3();
+function layout() {
+  const a = innerWidth / innerHeight;
+  const k = a < 1 ? clamp(0.8 / a, 1, 1.8) : 1;
+  camera.fov = 30; camera.aspect = a; camera.updateProjectionMatrix();
+  camBase.set(0, 7.6 * k, 7.0 * k);
+  renderer.setSize(innerWidth, innerHeight);
+}
+addEventListener('resize', layout); layout();
+
+/* ---------------------------------------------------------------- lights */
+scene.add(new THREE.HemisphereLight(0xffe9d2, 0x22140a, 0.35));
+const key = new THREE.SpotLight(0xfff0dc, 950, 70, 0.42, 0.9, 2);
+key.position.set(4.5, 17, 7.5); key.target.position.set(0, 0, 0);
+key.castShadow = true; key.shadow.mapSize.set(MOBILE ? 1024 : 2048, MOBILE ? 1024 : 2048);
+key.shadow.camera.near = 6; key.shadow.camera.far = 40; key.shadow.bias = -0.00015; key.shadow.normalBias = 0.015;
+scene.add(key, key.target);
+const rim = new THREE.PointLight(0xa8c0ff, 14, 30, 2); rim.position.set(-6, 7, -9); scene.add(rim);
+
+/* ---------------------------------------------------------------- noise */
+function makeNoise() {
+  const N = 256, p = new Float32Array(N * N);
+  for (let i = 0; i < p.length; i++) p[i] = Math.random();
+  return (x, y) => {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+    const x0 = xi & 255, x1 = (xi + 1) & 255, y0 = (yi & 255) * N, y1 = ((yi + 1) & 255) * N;
+    const a = p[y0 + x0], b = p[y0 + x1], c = p[y1 + x0], d = p[y1 + x1];
+    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  };
+}
+
+/* ---------------------------------------------------------------- table (walnut) */
+function woodTexture() {
+  const S = MOBILE ? 512 : 1024, c = document.createElement('canvas'); c.width = c.height = S;
+  const g = c.getContext('2d'), img = g.createImageData(S, S), d = img.data;
+  const n1 = makeNoise(), n2 = makeNoise(), n3 = makeNoise();
+  const sc = 1024 / S;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const X = x * sc, Y = y * sc;
+    const w = n1(X * 0.0035, Y * 0.012) * 2.4 + n2(X * 0.02, Y * 0.08) * 0.5;
+    const ring = 0.5 + 0.5 * Math.sin(Y * 0.07 + w * 3.0);
+    const t = Math.pow(ring, 3.2);
+    const fib = n3(X * 0.01, Y * 1.1);
+    const v = clamp(0.35 + 0.42 * (1 - t) + 0.23 * fib, 0, 1);
+    const i = (y * S + x) * 4;
+    d[i] = 34 + v * 52; d[i + 1] = 19 + v * 31; d[i + 2] = 11 + v * 17; d[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping; t.repeat.set(16, 16); t.rotation = 0.35; t.center.set(.5, .5); t.anisotropy = maxAniso;
+  return t;
+}
+const table = new THREE.Mesh(new THREE.PlaneGeometry(220, 220),
+  new THREE.MeshPhysicalMaterial({ map: woodTexture(), roughness: 0.62, clearcoat: 0.5, clearcoatRoughness: 0.22 }));
+table.rotation.x = -Math.PI / 2; table.receiveShadow = true; scene.add(table);
+
+/* ---------------------------------------------------------------- coin relief → textures */
+const F_FONT = '"PT Sans Narrow","Arial Narrow",Arial,sans-serif';
+const FIELD = 'rgb(110,110,110)', REL = 'rgb(190,190,190)', HI = 'rgb(214,214,214)', LINE = 'rgb(148,148,148)';
+
+function baseDisc(g) {
+  g.fillStyle = 'rgb(236,236,236)'; g.fillRect(0, 0, 1024, 1024);
+  const gr = g.createRadialGradient(512, 512, 448, 512, 512, 476);
+  gr.addColorStop(0, FIELD); gr.addColorStop(1, 'rgb(236,236,236)');
+  g.fillStyle = gr; g.beginPath(); g.arc(512, 512, 476, 0, 7); g.fill();
+  g.fillStyle = FIELD; g.beginPath(); g.arc(512, 512, 448, 0, 7); g.fill();
+}
+function arcText(g, text, r, center, top, px, spacing = 3) {
+  g.font = `700 ${px}px ${F_FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  const ws = [...text].map(ch => g.measureText(ch).width + spacing);
+  const total = ws.reduce((a, b) => a + b, 0) / r;
+  let a = top ? center - total / 2 : center + total / 2;
+  [...text].forEach((ch, i) => {
+    const da = ws[i] / r; const m = top ? a + da / 2 : a - da / 2;
+    g.save(); g.translate(512 + r * Math.cos(m), 512 + r * Math.sin(m));
+    g.rotate(top ? m + Math.PI / 2 : m - Math.PI / 2); g.fillText(ch, 0, 0); g.restore();
+    a = top ? a + da : a - da;
+  });
+}
+function crown(g, x, y, w, col) {
+  g.fillStyle = col;
+  g.fillRect(x - w / 2, y + w * 0.1, w, w * 0.2);
+  g.beginPath(); g.moveTo(x - w / 2, y + w * 0.12);
+  g.quadraticCurveTo(x - w / 2, y - w * 0.36, x, y - w * 0.42);
+  g.quadraticCurveTo(x + w / 2, y - w * 0.36, x + w / 2, y + w * 0.12); g.closePath(); g.fill();
+  g.fillRect(x - w * 0.045, y - w * 0.66, w * 0.09, w * 0.26); g.fillRect(x - w * 0.12, y - w * 0.6, w * 0.24, w * 0.08);
+  g.strokeStyle = LINE; g.lineWidth = Math.max(1.5, w * 0.04);
+  g.beginPath(); g.moveTo(x, y + w * 0.1); g.lineTo(x, y - w * 0.4); g.stroke();
+  g.beginPath(); g.moveTo(x - w / 2, y + w * 0.1); g.lineTo(x + w / 2, y + w * 0.1); g.stroke();
+}
+function drawEagle(g) {
+  for (const s of [1, -1]) {
+    g.save(); g.scale(s, 1);
+    g.fillStyle = REL; g.beginPath(); g.moveTo(28, -38);
+    g.bezierCurveTo(70, -120, 140, -195, 208, -222);
+    [[226, -178], [212, -160], [232, -128], [210, -108], [228, -78], [203, -62], [214, -30], [186, -20], [188, 10], [158, 4], [150, 36], [120, 20], [98, 44], [72, 22], [48, 34], [26, 10]]
+      .forEach(([x, y]) => g.lineTo(x, y));
+    g.closePath(); g.fill();
+    g.strokeStyle = LINE; g.lineCap = 'round'; g.lineWidth = 3.2;
+    [[200, -200], [214, -150], [214, -100], [205, -50], [180, 0], [140, 20], [95, 30]].forEach(([x, y]) => {
+      g.beginPath(); g.moveTo(48, -22); g.quadraticCurveTo((48 + x) / 2 + 12, (y - 22) / 2 - 24, x * 0.92, y * 0.92); g.stroke();
+    });
+    g.lineWidth = 2.6;
+    g.beginPath(); g.moveTo(42, -62); g.bezierCurveTo(90, -112, 140, -150, 192, -186); g.stroke();
+    g.beginPath(); g.moveTo(40, -10); g.bezierCurveTo(90, -40, 140, -60, 196, -76); g.stroke();
+    g.strokeStyle = REL; g.lineWidth = 24;
+    g.beginPath(); g.moveTo(10, -50); g.quadraticCurveTo(18, -105, 52, -122); g.stroke();
+    g.fillStyle = REL; g.beginPath(); g.arc(58, -126, 19, 0, 7); g.fill();
+    g.beginPath(); g.moveTo(72, -134); g.quadraticCurveTo(97, -137, 99, -117); g.lineTo(76, -116); g.closePath(); g.fill();
+    g.lineWidth = 3; g.beginPath(); g.moveTo(82, -113); g.quadraticCurveTo(93, -107, 97, -98); g.stroke();
+    g.fillStyle = LINE; g.beginPath(); g.arc(63, -130, 3.6, 0, 7); g.fill();
+    crown(g, 56, -152, 32, HI);
+    g.strokeStyle = REL; g.lineWidth = 16; g.beginPath(); g.moveTo(28, 52); g.lineTo(56, 96); g.stroke();
+    g.lineWidth = 4; g.strokeStyle = HI;
+    for (const k of [-1, 0, 1]) { g.beginPath(); g.moveTo(56, 96); g.lineTo(56 + k * 12, 112); g.stroke(); }
+    g.restore();
+  }
+  // tail
+  g.fillStyle = REL; g.beginPath();
+  [[-28, 58], [-60, 140], [-31, 125], [-15, 154], [0, 134], [15, 154], [31, 125], [60, 140], [28, 58]].forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y));
+  g.closePath(); g.fill();
+  g.strokeStyle = LINE; g.lineWidth = 2.5;
+  for (const x of [-30, -12, 12, 30]) { g.beginPath(); g.moveTo(x * 0.5, 70); g.lineTo(x * 1.25, 132); g.stroke(); }
+  g.fillStyle = REL; g.beginPath(); g.ellipse(0, 5, 44, 72, 0, 0, 7); g.fill();
+  // crowns & ribbon
+  crown(g, 0, -190, 62, HI);
+  g.strokeStyle = REL; g.lineWidth = 6;
+  g.beginPath(); g.moveTo(-52, -160); g.quadraticCurveTo(-26, -150, -16, -168); g.stroke();
+  g.beginPath(); g.moveTo(52, -160); g.quadraticCurveTo(26, -150, 16, -168); g.stroke();
+  // scepter (viewer's left) & orb (viewer's right)
+  g.strokeStyle = HI; g.lineWidth = 8; g.beginPath(); g.moveTo(-60, 112); g.lineTo(-130, 18); g.stroke();
+  g.fillStyle = HI; g.beginPath(); g.arc(-133, 13, 10, 0, 7); g.fill();
+  g.beginPath(); g.arc(84, 116, 22, 0, 7); g.fill();
+  g.strokeStyle = LINE; g.lineWidth = 3; g.beginPath(); g.moveTo(62, 112); g.quadraticCurveTo(84, 104, 106, 112); g.stroke();
+  g.strokeStyle = HI; g.lineWidth = 5; g.beginPath(); g.moveTo(84, 94); g.lineTo(84, 74); g.moveTo(76, 82); g.lineTo(92, 82); g.stroke();
+  // shield with rider
+  g.fillStyle = HI; g.beginPath(); g.moveTo(-36, -30); g.lineTo(36, -30); g.lineTo(36, 30);
+  g.quadraticCurveTo(36, 64, 0, 78); g.quadraticCurveTo(-36, 64, -36, 30); g.closePath(); g.fill();
+  g.fillStyle = REL; g.beginPath(); g.moveTo(-29, -23); g.lineTo(29, -23); g.lineTo(29, 28);
+  g.quadraticCurveTo(29, 57, 0, 69); g.quadraticCurveTo(-29, 57, -29, 28); g.closePath(); g.fill();
+  g.fillStyle = HI; g.beginPath(); g.ellipse(4, 22, 18, 8.5, -0.05, 0, 7); g.fill();
+  g.beginPath(); g.ellipse(-15, 12, 6, 9, -0.6, 0, 7); g.fill();
+  g.strokeStyle = HI; g.lineWidth = 3.5;
+  for (const [x1, y1, x2, y2] of [[-8, 27, -14, 44], [-2, 28, 2, 45], [12, 27, 18, 43], [18, 25, 26, 40]]) { g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); }
+  g.beginPath(); g.moveTo(20, 18); g.quadraticCurveTo(28, 22, 26, 34); g.stroke();
+  g.beginPath(); g.ellipse(6, 4, 5, 9, 0.2, 0, 7); g.fill();
+  g.beginPath(); g.arc(7, -8, 4, 0, 7); g.fill();
+  g.lineWidth = 2.5; g.beginPath(); g.moveTo(22, -14); g.lineTo(-24, 44); g.stroke();
+  g.beginPath(); g.ellipse(-12, 50, 9, 4, 0.3, 0, 7); g.fill();
+}
+function drawObverse(g) {
+  baseDisc(g);
+  g.fillStyle = REL;
+  arcText(g, 'РОССИЙСКАЯ ФЕДЕРАЦИЯ', 404, -Math.PI / 2, true, 50, 4);
+  arcText(g, 'БАНК РОССИИ', 404, Math.PI / 2, false, 50, 5);
+  g.save(); g.translate(512, 478); g.scale(1.2, 1.2); drawEagle(g); g.restore();
+  g.fillStyle = REL; g.font = `700 46px ${F_FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('2024', 512, 728);
+  g.font = `700 24px ${F_FONT}`; g.fillText('ММД', 650, 728);
+}
+function drawReverse(g) {
+  baseDisc(g);
+  g.fillStyle = REL; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  g.font = `700 380px ${F_FONT}`; g.fillText('5', 432, 618);
+  g.font = `700 104px ${F_FONT}`; g.fillText('РУБЛЕЙ', 432, 742);
+  g.strokeStyle = LINE; g.lineWidth = 3;
+  g.beginPath(); g.moveTo(320, 768); g.lineTo(544, 768); g.stroke();
+  // plant ornament on the right
+  g.strokeStyle = REL; g.lineWidth = 9; g.lineCap = 'round';
+  g.beginPath(); g.arc(512, 512, 372, -1.12, 1.06); g.stroke();
+  for (let i = 0; i < 11; i++) {
+    const a = -1.04 + i * 0.2, side = i % 2 ? 1 : -1;
+    const x = 512 + 372 * Math.cos(a), y = 512 + 372 * Math.sin(a);
+    const rr = 372 + side * 28, lx = 512 + rr * Math.cos(a + 0.05), ly = 512 + rr * Math.sin(a + 0.05);
+    g.fillStyle = REL; g.save(); g.translate(lx, ly); g.rotate(a + Math.PI / 2 + side * 0.7);
+    g.beginPath(); g.ellipse(0, 0, 32, 11, 0, 0, 7); g.fill();
+    g.strokeStyle = LINE; g.lineWidth = 2; g.beginPath(); g.moveTo(-26, 0); g.lineTo(26, 0); g.stroke(); g.restore();
+    if (i % 3 === 1) { g.fillStyle = HI; g.beginPath(); g.arc(512 + (372 - side * 26) * Math.cos(a - .06), 512 + (372 - side * 26) * Math.sin(a - .06), 8, 0, 7); g.fill(); }
+  }
+}
+
+function boxBlur(src, w, h, r) {
+  const tmp = new Float32Array(src.length), out = new Float32Array(src.length), n = 2 * r + 1;
+  for (let y = 0; y < h; y++) {
+    let s = 0; const o = y * w;
+    for (let x = -r; x <= r; x++) s += src[o + clamp(x, 0, w - 1)];
+    for (let x = 0; x < w; x++) { tmp[o + x] = s / n; s += src[o + Math.min(x + r + 1, w - 1)] - src[o + Math.max(x - r, 0)]; }
+  }
+  for (let x = 0; x < w; x++) {
+    let s = 0;
+    for (let y = -r; y <= r; y++) s += tmp[clamp(y, 0, h - 1) * w + x];
+    for (let y = 0; y < h; y++) { out[y * w + x] = s / n; s += tmp[Math.min(y + r + 1, h - 1) * w + x] - tmp[Math.max(y - r, 0) * w + x]; }
+  }
+  return out;
+}
+function texFromData(data, S, srgb) {
+  const c = document.createElement('canvas'); c.width = c.height = S;
+  c.getContext('2d').putImageData(new ImageData(data, S, S), 0, 0);
+  const t = new THREE.CanvasTexture(c); if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = maxAniso; return t;
+}
+function makeFace(draw) {
+  const S = MOBILE ? 1024 : 2048, k = S / 1024;
+  const c = document.createElement('canvas'); c.width = c.height = S;
+  const g = c.getContext('2d'); g.scale(k, k); draw(g);
+  const px = g.getImageData(0, 0, S, S).data, N = S * S;
+  let h = new Float32Array(N); for (let i = 0; i < N; i++) h[i] = px[i * 4] / 255;
+  const rb = Math.max(1, Math.round(1.2 * k));
+  h = boxBlur(boxBlur(h, S, S, rb), S, S, rb);
+  const big = boxBlur(boxBlur(h, S, S, Math.round(9 * k)), S, S, Math.round(9 * k));
+  const nrm = new Uint8ClampedArray(N * 4), col = new Uint8ClampedArray(N * 4), rgh = new Uint8ClampedArray(N * 4);
+  const s = 6 * k, nz = makeNoise();
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const i = y * S + x;
+    const dx = h[y * S + Math.min(x + 1, S - 1)] - h[y * S + Math.max(x - 1, 0)];
+    const dy = h[Math.min(y + 1, S - 1) * S + x] - h[Math.max(y - 1, 0) * S + x];
+    let nx = -dx * s, ny = dy * s, nzv = 1; const l = Math.hypot(nx, ny, nzv); nx /= l; ny /= l; nzv /= l;
+    nrm[i * 4] = (nx * .5 + .5) * 255; nrm[i * 4 + 1] = (ny * .5 + .5) * 255; nrm[i * 4 + 2] = (nzv * .5 + .5) * 255; nrm[i * 4 + 3] = 255;
+    const hn = clamp((h[i] - 0.43) / 0.5, 0, 1);
+    const ao = clamp(1 + (h[i] - big[i]) * 1.8, 0.62, 1.06);
+    const grain = (nz(x * 0.35 / k, y * 0.35 / k) - .5) * 10 + (Math.random() - .5) * 6;
+    const lum = (0.86 + 0.14 * hn) * ao;
+    col[i * 4] = 214 * lum + grain; col[i * 4 + 1] = 211 * lum + grain; col[i * 4 + 2] = 204 * lum + grain; col[i * 4 + 3] = 255;
+    const r = clamp(0.44 - 0.2 * hn + (nz(x * 0.05 / k, y * 0.05 / k) - .5) * 0.08, 0.12, 0.7);
+    rgh[i * 4] = rgh[i * 4 + 1] = rgh[i * 4 + 2] = r * 255; rgh[i * 4 + 3] = 255;
+  }
+  // fine scratches into roughness
+  const rc = document.createElement('canvas'); rc.width = rc.height = S;
+  const rg = rc.getContext('2d'); rg.putImageData(new ImageData(rgh, S, S), 0, 0);
+  rg.lineCap = 'round';
+  for (let i = 0; i < 70; i++) {
+    rg.strokeStyle = `rgba(255,255,255,${rand(.04, .12)})`; rg.lineWidth = rand(.6, 1.6) * k;
+    const x = rand(0, S), y = rand(0, S), a = rand(0, 7), L = rand(20, 160) * k;
+    rg.beginPath(); rg.moveTo(x, y); rg.quadraticCurveTo(x + Math.cos(a) * L * .5 + rand(-10, 10), y + Math.sin(a) * L * .5 + rand(-10, 10), x + Math.cos(a) * L, y + Math.sin(a) * L); rg.stroke();
+  }
+  const rt = new THREE.CanvasTexture(rc); rt.anisotropy = maxAniso;
+  return { map: texFromData(col, S, true), normalMap: texFromData(nrm, S, false), roughnessMap: rt };
+}
+function makeEdge() {
+  const W = 2048, Hh = 64, h = new Float32Array(W);
+  for (let x = 0; x < W; x++) { const seg = Math.floor(x / W * 12) % 2; h[x] = seg === 0 ? 0.5 + 0.5 * Math.cos(2 * Math.PI * x / 9) : 0.5; }
+  const nrm = new Uint8ClampedArray(W * Hh * 4), col = new Uint8ClampedArray(W * Hh * 4);
+  for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) {
+    const i = (y * W + x) * 4, dx = h[(x + 1) % W] - h[(x - 1 + W) % W];
+    let nx = -dx * 2.2, ny = (y < 5 ? -0.5 : y > Hh - 6 ? 0.5 : 0), nz = 1; const l = Math.hypot(nx, ny, nz);
+    nrm[i] = (nx / l * .5 + .5) * 255; nrm[i + 1] = (ny / l * .5 + .5) * 255; nrm[i + 2] = (nz / l * .5 + .5) * 255; nrm[i + 3] = 255;
+    const v = 0.88 + h[x] * 0.1 + (Math.random() - .5) * 0.04;
+    col[i] = 210 * v; col[i + 1] = 207 * v; col[i + 2] = 200 * v; col[i + 3] = 255;
+  }
+  const mk = (d, srgb) => { const c = document.createElement('canvas'); c.width = W; c.height = Hh; c.getContext('2d').putImageData(new ImageData(d, W, Hh), 0, 0); const t = new THREE.CanvasTexture(c); if (srgb) t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso; return t; };
+  return { map: mk(col, true), normalMap: mk(nrm, false) };
+}
+
+/* ---------------------------------------------------------------- coin mesh */
+const coin = new THREE.Group(); scene.add(coin);
+const coinQ = new THREE.Quaternion(), coinP = new THREE.Vector3(0, H / 2, 0);
+async function buildCoin() {
+  try { await Promise.race([document.fonts.load(`700 50px ${F_FONT}`), new Promise(r => setTimeout(r, 2500))]); } catch (e) {}
+  const ob = makeFace(drawObverse), rv = makeFace(drawReverse), ed = makeEdge();
+  const faceMat = t => new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 1, ...t, normalScale: new THREE.Vector2(1.1, 1.1) });
+  const edgeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0.3, ...ed });
+  const bevelMat = new THREE.MeshStandardMaterial({ color: 0xd2cfc8, metalness: 1, roughness: 0.24 });
+  const SEG = 160;
+  const side = new THREE.Mesh(new THREE.CylinderGeometry(R, R, H - 2 * BV, SEG, 1, true), edgeMat);
+  const bTop = new THREE.Mesh(new THREE.CylinderGeometry(R - INS, R, BV, SEG, 1, true), bevelMat); bTop.position.y = H / 2 - BV / 2;
+  const bBot = new THREE.Mesh(new THREE.CylinderGeometry(R, R - INS, BV, SEG, 1, true), bevelMat); bBot.position.y = -H / 2 + BV / 2;
+  const top = new THREE.Mesh(new THREE.CircleGeometry(R - INS, SEG), faceMat(ob)); top.rotation.x = -Math.PI / 2; top.position.y = H / 2;
+  const bot = new THREE.Mesh(new THREE.CircleGeometry(R - INS, SEG), faceMat(rv)); bot.rotation.x = Math.PI / 2; bot.position.y = -H / 2;
+  for (const m of [side, bTop, bBot, top, bot]) { m.castShadow = true; m.receiveShadow = true; coin.add(m); }
+  // start: random yaw, random side up
+  coinQ.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rand(-0.5, 0.5));
+  if (rnd(2)) coinQ.premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI));
+  coin.quaternion.copy(coinQ); coin.position.copy(coinP);
+}
+
+/* ---------------------------------------------------------------- audio */
+const AU = {
+  ctx: null, on: true,
+  F: [4180, 6930, 9880, 12940], AMP: [1, .55, .33, .18],
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    const ctx = this.ctx = new C();
+    this.out = ctx.createGain(); this.out.gain.value = this.on ? 1 : 0;
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -8; comp.ratio.value = 4;
+    this.out.connect(comp).connect(ctx.destination);
+    const len = Math.floor(ctx.sampleRate * 0.8), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 4); }
+    this.verb = ctx.createConvolver(); this.verb.buffer = ir;
+    const wet = ctx.createGain(); wet.gain.value = 0.2; this.verb.connect(wet).connect(this.out);
+    this.bus = ctx.createGain(); this.bus.connect(this.out); this.bus.connect(this.verb);
+    const nb = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), nd = nb.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+    this.noise = nb;
+  },
+  ring(t, gain, decay, dest = this.bus) {
+    const ctx = this.ctx;
+    this.F.forEach((f, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.value = f * rand(.993, 1.007);
+      const dec = decay * (1 - i * 0.17);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain * this.AMP[i], t + 0.002);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+      o.connect(g).connect(dest); o.start(t); o.stop(t + dec + 0.05);
+    });
+  },
+  hit(t, gain, f, q, dur, type = 'lowpass') {
+    const ctx = this.ctx, s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = this.noise; fl.type = type; fl.frequency.value = f; fl.Q.value = q;
+    g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(fl).connect(g).connect(this.bus); s.start(t, rand(0, 0.8), dur + 0.05);
+  },
+  flick(spinHz) {
+    if (!this.ctx) return; const t = this.ctx.currentTime;
+    this.hit(t, 0.55, 3200, 0.7, 0.014, 'highpass'); this.hit(t, 0.3, 650, 1, 0.025);
+    const trem = this.ctx.createGain(); trem.gain.value = 0.55; trem.connect(this.bus);
+    const lfo = this.ctx.createOscillator(); lfo.frequency.value = spinHz; const dg = this.ctx.createGain(); dg.gain.value = 0.45;
+    lfo.connect(dg).connect(trem.gain); lfo.start(t); lfo.stop(t + 2.2);
+    this.ring(t + 0.004, 0.17, 1.9, trem);
+  },
+  impact(v) {
+    if (!this.ctx) return; const t = this.ctx.currentTime;
+    this.hit(t, 0.8 * v, 950, 0.8, 0.04); this.hit(t, 0.3 * v, 2600, 0.8, 0.014);
+    this.ring(t, 0.22 * v, 0.5);
+  },
+  tick(a) {
+    if (!this.ctx) return; const t = this.ctx.currentTime;
+    this.ring(t, 0.035 + 0.09 * a, 0.08); this.hit(t, 0.1 * a + 0.02, 1500, 0.7, 0.012);
+  },
+  settle() {
+    if (!this.ctx) return; const t = this.ctx.currentTime;
+    this.hit(t, 0.35, 850, 0.8, 0.05); this.ring(t, 0.1, 0.7);
+  },
+  setOn(v) { this.on = v; if (this.ctx) this.out.gain.setTargetAtTime(v ? 1 : 0, this.ctx.currentTime, 0.05); },
+};
+const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+
+/* ---------------------------------------------------------------- simulation */
+const UP = new THREE.Vector3(0, 1, 0);
+const ySup = a => R * Math.abs(Math.sin(a)) + (H / 2) * Math.abs(Math.cos(a));
+const faceUp = q => UP.clone().applyQuaternion(q).y > 0 ? 'orel' : 'reshka';
+let state = 'loading', S = null;
+const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), tilt = new THREE.Vector3();
+
+function toss() {
+  if (state !== 'rest') return;
+  AU.init();
+  const result = rnd(2) ? 'orel' : 'reshka';
+  const n = 14 + 2 * rnd(4) + (result === faceUp(coinQ) ? 0 : 1);
+  const beta = rand(-0.45, 0.45) + (rnd(2) ? 0 : Math.PI);
+  const axis = new THREE.Vector3(Math.cos(beta), 0, Math.sin(beta));
+  const delta = rand(0.2, 0.42) * (rnd(2) ? 1 : -1);
+  const apex = rand(5.6, 6.8), y0 = coinP.y, yL = ySup(delta);
+  const vy = Math.sqrt(2 * G * (apex - y0));
+  const T = (vy + Math.sqrt(vy * vy - 2 * G * (yL - y0))) / G;
+  const target = new THREE.Vector3(rand(-1.1, 1.1), 0, rand(-0.7, 0.9));
+  const vxz = new THREE.Vector3(target.x - coinP.x, 0, target.z - coinP.z).divideScalar(T + 0.3);
+  const bounces = []; let yS = yL, dS = delta, tAcc = T;
+  const d1 = -delta * rand(.35, .55), d2 = -d1 * rand(.3, .5);
+  for (const [vb, dE] of [[rand(7, 9), d1], [rand(3, 4.2), d2]]) {
+    const yE = ySup(dE), Tb = (vb + Math.sqrt(vb * vb - 2 * G * (yE - yS))) / G;
+    bounces.push({ t0: tAcc, T: Tb, v: vb, yS, dS, dE }); tAcc += Tb; yS = yE; dS = dE;
+  }
+  S = { t0: performance.now() / 1000, Q0: coinQ.clone(), P0: coinP.clone(), axis, n, delta, vy, T, vxz, bounces, tB: tAcc,
+        psiRate: rand(-1.6, 1.6), y0, result, bi: -1, landed: false };
+  state = 'fly';
+  const omega = (n * Math.PI + delta) / T;
+  AU.flick(omega / Math.PI);
+  buzz(12);
+  $('res').classList.remove('on'); $('sub').style.opacity = 0; $('hint').classList.add('off');
+}
+const hs = t => t < S.T ? t : S.T + 0.3 * (t - S.T);
+function orient(theta, psi) {
+  qa.setFromAxisAngle(S.axis, theta); qb.setFromAxisAngle(UP, psi);
+  return coinQ.copy(qb).multiply(qa).multiply(S.Q0);
+}
+function simulate(now, dt) {
+  if (state !== 'fly' && state !== 'wobble') return;
+  const t = now - S.t0;
+  if (state === 'fly') {
+    const psi = S.psiRate * hs(t);
+    coinP.x = S.P0.x + S.vxz.x * hs(t); coinP.z = S.P0.z + S.vxz.z * hs(t);
+    if (t < S.T) {
+      const th = (S.n * Math.PI + S.delta) * t / S.T;
+      orient(th, psi);
+      coinP.y = S.y0 + S.vy * t - G * t * t / 2;
+      if (t < 0.12) coinP.y = Math.max(coinP.y, ySup(th));
+    } else if (t < S.tB) {
+      if (!S.landed) { S.landed = true; AU.impact(1); buzz(25); }
+      let bi = S.bounces.findIndex(b => t >= b.t0 && t < b.t0 + b.T);
+      if (bi < 0) bi = S.bounces.length - 1;
+      if (bi !== S.bi) { if (S.bi >= 0) { AU.impact(S.bounces[S.bi].v / 32 + 0.12); buzz(10); } S.bi = bi; }
+      const b = S.bounces[bi], tau = Math.min(t - b.t0, b.T), u = tau / b.T;
+      const e = u * u * (3 - 2 * u);
+      orient(S.n * Math.PI + b.dS + (b.dE - b.dS) * e, psi);
+      coinP.y = b.yS + b.v * tau - G * tau * tau / 2;
+    } else {
+      AU.impact(S.bounces[S.bounces.length - 1].v / 32 + 0.08);
+      const psiE = S.psiRate * hs(S.tB);
+      qa.setFromAxisAngle(S.axis, S.n * Math.PI); qb.setFromAxisAngle(UP, psiE);
+      S.Qend = qb.clone().multiply(qa).multiply(S.Q0);
+      const A2 = S.axis.clone().applyAxisAngle(UP, psiE), d2 = S.bounces[S.bounces.length - 1].dE;
+      S.a0 = Math.abs(d2) + 0.04; S.phi = Math.atan2(A2.z, A2.x) + (d2 < 0 ? Math.PI : 0);
+      S.Tw = rand(1.4, 2.1); S.om = rand(9, 12) * (rnd(2) ? 1 : -1); S.tw0 = t; S.tick = Math.floor(S.phi / (Math.PI / 2));
+      state = 'wobble';
+    }
+  }
+  if (state === 'wobble') {
+    const u = (t - S.tw0) / S.Tw;
+    if (u >= 1) {
+      coinQ.copy(S.Qend); coinP.y = H / 2; state = 'rest';
+      AU.settle(); buzz(30); setTimeout(showResult, 250);
+    } else {
+      const a = S.a0 * Math.pow(1 - u, 1.4);
+      const rate = clamp(Math.abs(S.om) * Math.sqrt(S.a0 / Math.max(a, S.a0 * 0.02)), 0, 78) * Math.sign(S.om);
+      S.phi += rate * dt;
+      tilt.set(Math.cos(S.phi), 0, Math.sin(S.phi));
+      coinQ.copy(qa.setFromAxisAngle(tilt, a)).multiply(S.Qend);
+      coinP.y = ySup(a);
+      const k = Math.floor(S.phi / (Math.PI / 2));
+      if (k !== S.tick) { S.tick = k; AU.tick(a / S.a0); }
+    }
+  }
+  coin.quaternion.copy(coinQ); coin.position.copy(coinP);
+}
+
+/* ---------------------------------------------------------------- result UI */
+const stats = { orel: 0, reshka: 0, hist: [] };
+try { Object.assign(stats, JSON.parse(localStorage.getItem('ed-coin') || '{}')); } catch (e) {}
+const LINES = {
+  orel: ['Эд, выпал орёл', 'Орёл. Вселенная сказала «да»', 'Орёл, Эдуард. Действуй'],
+  reshka: ['Эд, выпала решка', 'Решка. Вселенная сказала «нет»', 'Решка, Эдуард. Подумай ещё'],
+};
+function renderStats() {
+  $('so').textContent = stats.orel; $('sr').textContent = stats.reshka;
+  $('hist').innerHTML = stats.hist.slice(-8).map(h => `<i class="${h === 'reshka' ? 'r' : ''}"></i>`).join('');
+}
+function showResult() {
+  const f = faceUp(coinQ);
+  stats[f]++; stats.hist.push(f); stats.hist = stats.hist.slice(-20);
+  try { localStorage.setItem('ed-coin', JSON.stringify(stats)); } catch (e) {}
+  $('res').textContent = f === 'orel' ? 'ОРЁЛ' : 'РЕШКА';
+  $('sub').textContent = LINES[f][rnd(3)];
+  $('res').classList.add('on'); $('sub').style.opacity = 1; $('hint').classList.remove('off');
+  $('hint').textContent = 'Ещё раз? Нажми на монетку';
+  renderStats();
+}
+renderStats();
+
+/* ---------------------------------------------------------------- input */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+const hitSphere = new THREE.Mesh(new THREE.SphereGeometry(1.5, 12, 8), new THREE.MeshBasicMaterial({ visible: false }));
+scene.add(hitSphere);
+addEventListener('pointerdown', e => {
+  if (e.target.closest('a,button')) return;
+  toss();
+});
+addEventListener('pointermove', e => {
+  ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
+  document.body.style.cursor = state === 'rest' && ray.intersectObject(hitSphere).length ? 'pointer' : 'default';
+});
+addEventListener('keydown', e => { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); toss(); } });
+$('snd').addEventListener('click', () => { AU.setOn(!AU.on); $('snd').textContent = AU.on ? '🔊' : '🔇'; });
+document.addEventListener('visibilitychange', () => { if (AU.ctx) document.hidden ? AU.ctx.suspend() : AU.ctx.resume(); });
+
+/* ---------------------------------------------------------------- loop */
+const look = new THREE.Vector3(), camPos = new THREE.Vector3();
+let last = performance.now() / 1000; let FREEZE = null;
+function frame() {
+  let now = performance.now() / 1000; const dt = Math.min(now - last, 0.05); last = now;
+  if (FREEZE !== null && S) now = S.t0 + FREEZE;
+  simulate(now, dt);
+  hitSphere.position.copy(coinP);
+  const cy = coinP.y - H / 2, bob = Math.sin(now * 0.5) * 0.04;
+  camPos.set(camBase.x + coinP.x * 0.15 + Math.sin(now * 0.31) * 0.05, camBase.y + cy * 0.55 + bob, camBase.z + cy * 0.75 + coinP.z * 0.1);
+  camera.position.lerp(camPos, Math.min(1, dt * 7));
+  look.lerp(new THREE.Vector3(coinP.x * 0.5, cy * 0.8, coinP.z * 0.5), Math.min(1, dt * 9));
+  camera.lookAt(look);
+  key.target.position.set(coinP.x * 0.6, 0, coinP.z * 0.6);
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+buildCoin().then(() => {
+  camera.position.copy(camBase); camera.lookAt(0, 0, 0);
+  renderer.compile(scene, camera);
+  state = 'rest'; $('loading').classList.add('gone');
+  requestAnimationFrame(frame);
+});
+window.__coin = { toss, state: () => state, faceUp: () => faceUp(coinQ), freeze: t => { FREEZE = t; } };
+</script>
+</body>
+</html>
